@@ -10,7 +10,7 @@ services:
     build: 
       context: .
       dockerfile: battleship/Dockerfile
-    command: python /code/manage.py runserver 0.0.0.0:8001
+    command: python ./code/manage.py runserver 0.0.0.0:8001
     volumes:
       - ./battleship:/code
       - ./game_logic:/code/game_logic

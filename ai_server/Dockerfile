@@ -14,4 +14,4 @@ EXPOSE 5555
 # COPY ./ai_server .
 # COPY ./game_logic game_logic
 
-CMD ["python3", "ai_api.py"]
+CMD ["python3", "./ai_api.py"]
