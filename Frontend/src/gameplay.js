@@ -620,7 +620,7 @@ function GamePlay() {
 
     if(socket === undefined) {
       let hostName = window.location.hostname; // allow for multiplayer locally and across computers
-      socket = new WebSocket("ws://"+hostName+":8000/ws/play/"+gameID+"/");
+      socket = new WebSocket("ws://"+hostName+":8001/ws/play/"+gameID+"/");
     }
 
     return (

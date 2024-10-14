@@ -67,7 +67,7 @@ def start_ai(player1_id, player2_id, num_ships, board_size, game_id):
                 getThinkTime()
                 row, col = ai.getMove()
                 print("got the move", flush=True)
-                url = 'http://web:8000/play/fire-shot/{}/{}/{}/{}'.format(game_id, player2_id, row, col)
+                url = 'http://web:8001/play/fire-shot/{}/{}/{}/{}'.format(game_id, player2_id, row, col)
                 response = requests.get(url)
 
     def on_open(ws):
@@ -76,14 +76,14 @@ def start_ai(player1_id, player2_id, num_ships, board_size, game_id):
         print("trying to place ships", flush=True)
         ship_board = placeShips(int(num_ships), int(board_size))
         print(ship_board, flush=True)
-        url = 'http://web:8000/play/confirm-ships/{}/{}/{}'.format(game_id, player2_id, ship_board)
+        url = 'http://web:8001/play/confirm-ships/{}/{}/{}'.format(game_id, player2_id, ship_board)
 
         response = requests.get(url)
 
     ###############################
     #BODY of start_ai function
     print("trying to connect to ws", flush=True)
-    ws_url = "ws://web:8000/ws/play/{}/".format(game_id) 
+    ws_url = "ws://web:8001/ws/play/{}/".format(game_id) 
     wsapp = websocket.WebSocketApp(ws_url, on_message=on_message, on_open=on_open)
     wsapp.run_forever()
     ###############################
