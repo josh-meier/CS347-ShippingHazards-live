@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-tgo&kn!)zlbz5#p^xvq5o%y4+rk(41$nwy6!c0r+q*hyb_f27=
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['web', 'localhost', 'redis', '*']
+ALLOWED_HOSTS = ['web-go884448oss8s8w8soskwkcw', 'localhost', 'redis-go884448oss8s8w8soskwkcw', '*']
 
 
 # Application definition

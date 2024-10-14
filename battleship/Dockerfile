@@ -9,6 +9,8 @@ ENV PYTHONUNBUFFERED 1
 # Set work directory
 WORKDIR /code
 
+EXPOSE 8001
+
 # Install dependencies
 COPY ./battleship/requirements.txt .
 RUN pip install -r requirements.txt
