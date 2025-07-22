@@ -12,7 +12,7 @@ import random
 
 app = Flask(__name__)
 
-ai_player_ids = {"1": "random",
+ai_player_ids = {"4": "random", #used to be 1, but aiplayer id and player id were both 1
                 "2": "targeted",
                 "3": "best"}
 
@@ -48,11 +48,15 @@ def start_ai(player1_id, player2_id, num_ships, board_size, game_id):
     ai.type = ai_player_ids[player2_id]
 
     def on_message(ws, message):
-        sys.stderr.write("AI Received: " + message + "/n")
         message_dict = json.loads(message)
         inner_dict = json.loads(message_dict['message'])
+        # print("AI Received: " + message_dict + "/n", flush=True)
+
         
         game_status = inner_dict["status"]
+        current_turn = inner_dict['turn']                                                                                                                      
+        current_player_id = inner_dict["player_id"] 
+        print(f"AI Debug: game_status={game_status}, turn={current_turn}, player_id={current_player_id}, ai_player_id={player2_id}", flush=True)            
         if game_status == 0: # while the game is not over (I think its an if and not a while now)
 
             # if the message from the websocket has information about the correct player's board, update the ai object
@@ -67,24 +71,30 @@ def start_ai(player1_id, player2_id, num_ships, board_size, game_id):
                 getThinkTime()
                 row, col = ai.getMove()
                 print("got the move", flush=True)
-                url = 'http://web:8001/play/fire-shot/{}/{}/{}/{}'.format(game_id, player2_id, row, col)
+                url = 'http://web:8000/play/fire-shot/{}/{}/{}/{}'.format(game_id, player2_id, row, col)
                 response = requests.get(url)
 
     def on_open(ws):
         # ai "selects" its ship placement (will eventually have shipBoard be different every time)
         # ship_board = "-a---------a--------------------cccc-----------d---------d---------d---------d------bbb-------------"
         print("trying to place ships", flush=True)
+        time.sleep(0.5) 
+        # console.log("ai confirmed ships")
         ship_board = placeShips(int(num_ships), int(board_size))
         print(ship_board, flush=True)
-        url = 'http://web:8001/play/confirm-ships/{}/{}/{}'.format(game_id, player2_id, ship_board)
+        url = 'http://web:8000/play/confirm-ships/{}/{}/{}'.format(game_id, player2_id, ship_board)
 
         response = requests.get(url)
+        print(f"[AI] Confirm ships response: {response.status_code} - {response.text}", flush=True)
+
+    def on_error(ws, error):
+        print(f"AI Websocket Error: {error}", flush=True)
 
     ###############################
     #BODY of start_ai function
     print("trying to connect to ws", flush=True)
-    ws_url = "ws://web:8001/ws/play/{}/".format(game_id) 
-    wsapp = websocket.WebSocketApp(ws_url, on_message=on_message, on_open=on_open)
+    ws_url = "ws://daphne:8001/ws/play/{}/".format(game_id) 
+    wsapp = websocket.WebSocketApp(ws_url, on_message=on_message, on_open=on_open, on_error=on_error)
     wsapp.run_forever()
     ###############################
 

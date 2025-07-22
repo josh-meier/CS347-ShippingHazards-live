@@ -116,7 +116,7 @@ function PlayMainCompButton () {
     return (
       <div className="popup-container">
         <div className="popup-body">
-          <NewGameButton text={"Easy"} isAI={true} opponentID={1}/>
+          <NewGameButton text={"Easy"} isAI={true} opponentID={4}/>
           <NewGameButton text={"Medium"} isAI={true} opponentID={2}/>
           <NewGameButton text={"Hard"} isAI={true} opponentID={3}/>
           <button className="popup-button" onClick={closePopup}>X</button>

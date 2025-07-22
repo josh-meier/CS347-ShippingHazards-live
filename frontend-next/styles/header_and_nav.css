@@ -1,0 +1,89 @@
+header {
+    background-color: #ff8ac7;
+    color: rgb(1, 1, 1);
+    margin: 0;
+}
+  
+header * {
+    vertical-align: middle;
+    margin: 0;
+}
+  
+header #logo {
+    margin-right: 5%;
+    height: 8em;
+}
+  
+#header-text {
+    font-size: 250%;
+    font-weight: bold;
+}
+
+header #user-info {
+    float: right;
+    font-size: 160%;
+    text-align: right;
+    padding: 1%;
+}
+
+header #user-info a {
+    color: black;
+}
+
+nav {
+    margin: 0;
+    padding: 0;
+    background-color: black;
+    color: white;
+    display: block;
+    font-size: 150%;
+}
+  
+nav a, .dropdown{
+    padding: 1.2% 3%;
+    background-color: black;
+    color: inherit;
+    display: inline;
+    font-weight: bold;
+    text-decoration: none;
+    text-align: center;
+    cursor: pointer;
+}
+
+nav a:hover {
+    background-color: white;
+    color: black;
+}
+
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: black;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+    z-index: 1;
+    padding-top: 1em;
+}
+
+.dropdown-content * {
+    color: white;
+    padding: 12px 16px;
+    font-size: 20px;
+    text-decoration: none;
+    display: block;
+}
+
+.dropdown-content *:hover {
+    background-color: white;
+    color: black;
+}
+
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+

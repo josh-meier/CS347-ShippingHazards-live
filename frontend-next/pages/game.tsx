@@ -1,0 +1,473 @@
+import HeaderAndNav from '../components/HeaderAndNav';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useRouter } from 'next/router';
+import Image from 'next/image';
+import hitImage from '../public/images/HitPopup.png';
+import sunkImage from '../public/images/SunkPopup.png';
+import muteIcon from '../public/images/mute.png';
+import unMuteIcon from '../public/images/unmute.png';
+
+// Sound paths
+const hitSound = '/sounds/hitSound.mp3';
+const missSound = '/sounds/missSound.mp3';
+const sunkSound = '/sounds/sunkSound.mp3';
+const lobbyMusic = '/sounds/lobbyMusic.mp3';
+
+
+// Module-level variables for functions that don't depend on React state/props
+let boardSize: number = 10;
+let playerBoard = "-----------a---------a------------cccc----------------b---------b---------b--------------------ddddd";
+let selectedShip: number[][] | null = null;
+let shipColor: string;
+
+function entireShipAt(id: string, board: string) {
+    let row = Number(id.slice(id.indexOf("-") + 1, id.lastIndexOf("-")));
+    let col = Number(id.slice(id.lastIndexOf("-") + 1));
+    let coords = [];
+    if (!board || row === null || col === null) return [];
+    let letter = board[(row * boardSize) + col];
+    for (let r = 0; r < boardSize; r++) {
+        for (let c = 0; c < boardSize; c++) {
+            if (board[(r * boardSize) + c] === letter) {
+                coords.push([r, c]);
+            }
+        }
+    }
+    return coords;
+}
+
+function legalSelectedShipMovement(changeFunct: (coords: number[], ship: number[][]) => number[]) {
+    if (!selectedShip) return false;
+    for (let i = 0; i < selectedShip.length; i++) {
+        let ship = selectedShip[i];
+        let newCoords = changeFunct(ship, selectedShip);
+        let row = newCoords[0];
+        let col = newCoords[1];
+        if (row < 0 || row >= boardSize || col < 0 || col >= boardSize || (playerBoard[(row * boardSize) + col] !== "-" && playerBoard[(row * boardSize) + col] !== playerBoard[(ship[0] * boardSize) + ship[1]])) {
+            return false;
+        }
+    }
+    return true;
+}
+
+function applySelectedShipMovement(changeFunct: (coords: number[], ship: number[][]) => number[]) {
+    if (!selectedShip) return;
+    let shipLetter = playerBoard[(selectedShip[0][0] * boardSize) + selectedShip[0][1]];
+
+    for (let i = 0; i < selectedShip.length; i++) {
+        let ship = selectedShip[i];
+        let id = "mysquare-" + ship[0] + "-" + ship[1];
+        (document.getElementById(id) as HTMLElement).style.backgroundColor = "rgba(0, 0, 0, 0)";
+        let ind = (ship[0] * boardSize) + ship[1];
+        playerBoard = playerBoard.substring(0, ind) + "-" + playerBoard.substring(ind + 1);
+        let newCoords = changeFunct(ship, selectedShip);
+        ship[0] = newCoords[0];
+        ship[1] = newCoords[1];
+    }
+
+    selectedShip.forEach(function (ship) {
+        let id = "mysquare-" + ship[0] + "-" + ship[1];
+        (document.getElementById(id) as HTMLElement).style.backgroundColor = "blue";
+        let ind = (ship[0] * boardSize) + ship[1];
+        playerBoard = playerBoard.substring(0, ind) + shipLetter + playerBoard.substring(ind + 1);
+    });
+}
+
+function BoardSquare({ id, row, column, myBoard, status, gameID, playerID }: { id: string, row: number, column: number, myBoard: boolean, status: string, gameID: string, playerID: number }) {
+    const handleClickSetup = () => {
+        if (myBoard) {
+            if (selectedShip !== null) {
+                selectedShip.forEach(function (ship) {
+                    let id = "mysquare-" + ship[0] + "-" + ship[1];
+                    (document.getElementById(id) as HTMLElement).style.backgroundColor = shipColor;
+                })
+            }
+            selectedShip = null;
+            if (playerBoard[(row * boardSize) + column] !== "-") {
+                selectedShip = entireShipAt(id, playerBoard);
+                selectedShip.forEach(function (ship) {
+                    let id = "mysquare-" + ship[0] + "-" + ship[1];
+                    (document.getElementById(id) as HTMLElement).style.backgroundColor = "blue";
+                });
+            }
+        }
+    };
+
+    const handleClickGameplay = () => {
+        if (!myBoard && status === "player_turn" && document.getElementById(id)?.style.backgroundColor === "blue") {
+            fetch(`/play/fire-shot/${gameID}/${playerID}/${row}/${column}`)
+                .catch(error => console.error('Error fetching fire shot: ', error));
+        }
+    };
+
+    const handleMouseEnter = () => {
+        if (!myBoard && status === "player_turn" && document.getElementById(id)?.style.backgroundColor === "rgba(0, 0, 0, 0)") {
+            (document.getElementById(id) as HTMLElement).style.backgroundColor = "blue";
+        }
+    };
+
+    const handleMouseLeave = () => {
+        if (!myBoard && status === "player_turn" && document.getElementById(id)?.style.backgroundColor === "blue") {
+            (document.getElementById(id) as HTMLElement).style.backgroundColor = 'rgba(0, 0, 0, 0)';
+        }
+    };
+
+    return (
+        <div className="board-square" id={id}
+            onClick={status === "setup" ? handleClickSetup : handleClickGameplay}
+            onMouseEnter={status === "player_turn" ? handleMouseEnter : undefined}
+            onMouseLeave={status === "player_turn" ? handleMouseLeave : undefined}
+            style={{
+                backgroundColor: (myBoard && playerBoard[(row * boardSize) + column] !== "-") ? shipColor : 'rgba(0, 0, 0, 0)'
+            }}>
+        </div>
+    );
+}
+
+function BoardRow({ row, myBoard, status, gameID, playerID }: { row: number, myBoard: boolean, status: string, gameID: string, playerID: number }) {
+    const arr = [];
+    for (let i = 0; i < boardSize; i++) {
+        const key = (myBoard ? "mysquare-" : "opponentsquare-") + row + "-" + i;
+        arr.push(<BoardSquare key={key} id={key} row={row} column={i} myBoard={myBoard} status={status} gameID={gameID} playerID={playerID} />);
+    }
+    return <div className="board-row">{arr}</div>;
+}
+
+function Board({ myBoard, status, hitPopupVisible, sunkPopupVisible, gameID, playerID }: { myBoard: boolean, status: string, hitPopupVisible: boolean, sunkPopupVisible: boolean, gameID: string, playerID: number }) {
+    const arr = [];
+    for (let i = 0; i < boardSize; i++) {
+        arr.push(<BoardRow key={"row" + i} row={i} myBoard={myBoard} status={status} gameID={gameID} playerID={playerID} />);
+    }
+    return (
+        <div className="board">
+            {arr}
+            <ComicPopup isVisible={hitPopupVisible} image={hitImage} />
+            <ComicPopup isVisible={sunkPopupVisible} image={sunkImage} />
+        </div>
+    );
+}
+
+function Instructions({ status }: { status: string }) {
+    const messages: { [key: string]: string } = {
+        loading_game: "Loading game data; please wait...",
+        setup: "Setup Stage: Click on a ship to select it, then use the Arrow Keys to move it, the Spacebar to rotate, and the Enter key to place it",
+        player_turn: "Your Turn: Choose a square on your opponent's board to attack",
+        opp_turn: "Waiting for opponent...",
+        setup_confirmed: "Waiting for opponent...",
+    };
+    return <div id="gameplay-instructions">{messages[status] || ""}</div>;
+}
+
+function ConfirmButton({ status, setStatus, gameID, playerID }: { status: string, setStatus: (status: string) => void, gameID: string, playerID: number }) {
+    const handleClick = () => {
+        if (selectedShip !== null) {
+            selectedShip.forEach(ship => {
+                const id = "mysquare-" + ship[0] + "-" + ship[1];
+                (document.getElementById(id) as HTMLElement).style.backgroundColor = shipColor;
+            });
+            selectedShip = null;
+        }
+        console.log("DEBUG: ConfirmButton clicked.");
+        setStatus("setup_confirmed");
+        fetch(`/play/confirm-ships/${gameID}/${playerID}/${playerBoard}`)
+            .catch(error => console.error('Error fetching confirm ships:', error));
+    };
+
+    return (
+        <div style={{ width: '100%', textAlign: 'center', paddingBottom: "2%" }}>
+            {status === "setup" && <button onClick={handleClick}>Confirm!</button>}
+        </div>
+    );
+}
+
+function GameOverPopup({ status, username }: { status: string, username: string }) {
+    const router = useRouter();
+    if (status !== "player_won" && status !== "opp_won") return null;
+    return (
+        <div id="gameOverPopup" style={{ visibility: 'visible' }}>
+            <div>GAME OVER</div>
+            <div>{status === "player_won" ? "You Won!" : "You Lost :("}</div><br />
+            <button onClick={() => router.push(`/home?username=${username}`)}>Back to Home</button>
+        </div>
+    );
+}
+
+function ComicPopup({ isVisible, image }: { isVisible: boolean, image: any }) {
+    if (!isVisible) return null;
+    return (
+        <div style={{ width: '120%', display: 'block', position: 'absolute', top: '5%', left: '-10%' }}>
+            <Image style={{ width: '100%' }} src={image} alt="Comic-book style popup" />
+        </div>
+    );
+}
+
+function BoardsAndTitles({ status, setStatus, popups1, popups2, gameID, playerID, playerNum }:
+    { status: string, setStatus: (status: string) => void, popups1: any, popups2: any, gameID: string, playerID: number, playerNum: number }) {
+
+    const handleKeys = useCallback((e: KeyboardEvent) => {
+        if (selectedShip !== null && status === "setup") {
+            if (e.code === "Space" || e.code.startsWith("Arrow")) {
+                e.preventDefault();
+                let changeFunct: ((coords: number[], ship: number[][]) => number[]) | null = null;
+                if (e.code === "ArrowRight") changeFunct = (coords) => [coords[0], coords[1] + 1];
+                else if (e.code === "ArrowLeft") changeFunct = (coords) => [coords[0], coords[1] - 1];
+                else if (e.code === "ArrowUp") changeFunct = (coords) => [coords[0] - 1, coords[1]];
+                else if (e.code === "ArrowDown") changeFunct = (coords) => [coords[0] + 1, coords[1]];
+                else if (e.code === "Space") {
+                    findRotation:
+                    for (let i = 0; i < selectedShip.length; i++) {
+                        for (let p = 0; p <= 1; p++) {
+                            for (let q = 0; q <= 1; q++) {
+                                const potentialFunc = (coords: number[], ship: number[][]) => {
+                                    const startingRow = ship[i][0];
+                                    const startingCol = ship[i][1];
+                                    const rowDiff = startingRow - coords[0];
+                                    const colDiff = startingCol - coords[1];
+                                    const newRow = p ? startingRow - colDiff : startingRow + colDiff;
+                                    const newCol = q ? startingCol - rowDiff : startingCol + rowDiff;
+                                    return [newRow, newCol];
+                                };
+                                if (legalSelectedShipMovement(potentialFunc)) {
+                                    changeFunct = potentialFunc;
+                                    break findRotation;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (changeFunct && legalSelectedShipMovement(changeFunct)) {
+                    applySelectedShipMovement(changeFunct);
+                }
+            } else if (e.code === "Enter") {
+                selectedShip.forEach(ship => {
+                    const id = "mysquare-" + ship[0] + "-" + ship[1];
+                    (document.getElementById(id) as HTMLElement).style.backgroundColor = shipColor;
+                });
+                selectedShip = null;
+            }
+        }
+    }, [status]);
+
+    useEffect(() => {
+        document.addEventListener('keydown', handleKeys);
+        return () => document.removeEventListener('keydown', handleKeys);
+    }, [handleKeys]);
+
+    return (
+        <div id="content">
+            <div className="content-row">
+                <div className="content-cell" style={{ width: '40%' }}>YOUR BOARD</div>
+                <div className="content-cell" style={{ width: '20%' }}></div>
+                <div className="content-cell" style={{ width: '40%' }}>OPPONENT BOARD</div>
+            </div>
+            <div className="content-row">
+                <div className="content-cell" style={{ width: '40%' }}>
+                    <Board myBoard={true} status={status} {...popups1} gameID={gameID} playerID={playerID} />
+                </div>
+                <div className="content-cell" style={{ width: '20%' }}>
+                    <Instructions status={status} /><br />
+                    <ConfirmButton status={status} setStatus={setStatus} gameID={gameID} playerID={playerID} />
+                </div>
+                <div className="content-cell" style={{ width: '40%' }}>
+                    <Board myBoard={false} status={status} {...popups2} gameID={gameID} playerID={playerID} />
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function RoomIDText({ status, gameID, playerNum }: { status: string, gameID: string, playerNum: number }) {
+    if (playerNum !== 1) return null;
+    const text = status === "setup" ? `Tell your friend to join with this ID -> Room ID: ${gameID}` : `Room ID: ${gameID}`;
+    return <div id="gameIDText">{text}</div>;
+}
+
+function MuteButton({ muted, setMuted }: { muted: boolean, setMuted: (muted: boolean) => void }) {
+    return (
+        <Image
+            style={{ width: '4em', height: '4em', margin: '.5em 0 0 1em', cursor: 'pointer' }}
+            src={muted ? muteIcon : unMuteIcon}
+            alt="speaker"
+            onClick={() => setMuted(!muted)}
+        />
+    );
+}
+
+export default function GamePlay() {
+    const router = useRouter();
+    const socketRef = useRef<WebSocket | null>(null);
+    const musicRef = useRef<HTMLAudioElement | null>(null);
+
+    const [status, setStatus] = useState<string>("loading");
+    const [username, setUsername] = useState<string>('');
+    const [gameID, setGameID] = useState<string>('');
+    const [playerID, setPlayerID] = useState<number>(0);
+    const [playerNum, setPlayerNum] = useState<number>(0);
+    const [isAIGame, setIsAIGame] = useState<boolean>(false);
+    const [muted, setMuted] = useState(false);
+
+    const [hitPopup1Visible, setHitPopup1Visible] = useState(false);
+    const [hitPopup2Visible, setHitPopup2Visible] = useState(false);
+    const [sunkPopup1Visible, setSunkPopup1Visible] = useState(false);
+    const [sunkPopup2Visible, setSunkPopup2Visible] = useState(false);
+
+    // Use a ref to hold the latest state values to prevent stale closures in the WebSocket handler
+    const stateRef = useRef({playerID, playerNum, muted, status});
+    useEffect(() => {
+        stateRef.current = {playerID, playerNum, muted, status};
+    }, [playerID, playerNum, muted, status]);
+
+
+    useEffect(() => {
+        if (musicRef.current) {
+            musicRef.current.volume = 0.5;
+            muted ? musicRef.current.pause() : musicRef.current.play().catch(e => console.log("Audio play failed", e));
+        }
+    }, [muted]);
+
+    useEffect(() => {
+        if (!router.isReady) return;
+
+        const {
+            gameID: gameID_q, boardSize: boardSize_q, playerID: playerID_q,
+            username: username_q, color: shipColor_q, playerNum: playerNum_q,
+            isAIGame: isAIGame_q, existingGame: existingGame_q,
+        } = router.query;
+
+        const gameId = gameID_q as string;
+        boardSize = parseInt(boardSize_q as string, 10) || 10;
+        const pID = parseInt(playerID_q as string, 10);
+        const pNum = parseInt(playerNum_q as string, 10);
+        
+        setUsername(username_q as string);
+        setGameID(gameId);
+        setPlayerID(pID);
+        setPlayerNum(pNum);
+        setIsAIGame(isAIGame_q === 'true');
+        shipColor = shipColor_q as string;
+
+        if (shipColor && shipColor[0] !== '#') {
+            shipColor = '#' + shipColor;
+        }
+
+        setStatus(existingGame_q === 'true' ? 'loading_game' : 'setup');
+
+        if (typeof window !== 'undefined' && gameId) {
+            console.log("LOCATION:", {
+                href:     window.location.href,
+                protocol: window.location.protocol,
+                host:     window.location.host,
+                hostname: window.location.hostname,
+                port:     window.location.port,
+            });
+            const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+            // const hostName = window.location.host;
+            const hostName = window.location.host.includes("3001")
+                                ? `${window.location.hostname}:8001`   // → dev: localhost:8001
+                                : window.location.host;                // → prod: shippinghazards.com
+            const wsUrl = `${protocol}://${hostName}/ws/play/${gameId}/`;
+            
+            console.log("DEBUG: Connecting to WebSocket at:", wsUrl);
+            const socket = new WebSocket(wsUrl);
+            socketRef.current = socket;
+
+            socket.onopen = () => {
+                console.log("DEBUG: WebSocket connection established.");
+            };
+
+            socket.onclose = (event) => {
+                console.log("DEBUG: WebSocket connection closed.", event);
+            };
+
+            socket.onerror = (error) => {
+                console.error("DEBUG: WebSocket error:", error);
+            };
+
+            socket.onmessage = (event: MessageEvent) => {
+                console.log('DEBUG: WebSocket message received:', event.data);
+                const message = JSON.parse(JSON.parse(event.data)["message"]);
+                
+                // Use the state from the ref to ensure we have the latest values
+                const { playerID, playerNum, muted, status } = stateRef.current;
+                console.log(`DEBUG: Processing message with state: status=${status}, playerNum=${playerNum}, playerID=${playerID}`);
+
+                const { player1_ship_status, player2_ship_status, turn, status: gameStatus } = message;
+
+                if (status === "setup" || status === "setup_confirmed") {
+                    if (player1_ship_status === 1 && player2_ship_status === 1) {
+                        const newStatus = turn === playerNum ? "player_turn" : "opp_turn";
+                        console.log(`DEBUG: Both players confirmed. Turn: ${turn}. Setting new status to: ${newStatus}`);
+                        setStatus(newStatus);
+                    }
+                    return;
+                }
+
+                const { player_id, ship_board, is_hit, is_sunk, shot_row, shot_col } = message;
+                const myBoard = player_id === playerID;
+                const id = `${myBoard ? "mysquare" : "opponentsquare"}-${shot_row}-${shot_col}`;
+                const hitElement = document.getElementById(id) as HTMLElement;
+
+                if (is_hit && is_sunk) {
+                    myBoard ? setSunkPopup1Visible(true) : setSunkPopup2Visible(true);
+                    if(hitElement) hitElement.style.backgroundColor = "red";
+                    if (!muted) new Audio(sunkSound).play();
+                    setTimeout(() => {
+                        myBoard ? setSunkPopup1Visible(false) : setSunkPopup2Visible(false);
+                        entireShipAt(id, ship_board).forEach(sq => {
+                            const sunkId = `${myBoard ? "mysquare" : "opponentsquare"}-${sq[0]}-${sq[1]}`;
+                            const sunkElement = document.getElementById(sunkId) as HTMLElement;
+                            if(sunkElement) sunkElement.style.backgroundColor = "gray";
+                        });
+                    }, 2000);
+                } else if (is_hit) {
+                    myBoard ? setHitPopup1Visible(true) : setHitPopup2Visible(true);
+                    if(hitElement) hitElement.style.backgroundColor = "red";
+                    if (!muted) new Audio(hitSound).play();
+                    setTimeout(() => myBoard ? setHitPopup1Visible(false) : setHitPopup2Visible(false), 2000);
+                } else {
+                    if(hitElement) hitElement.style.backgroundColor = "white";
+                    if (!muted) new Audio(missSound).play();
+                }
+
+                if (gameStatus > 0) {
+                    const newStatus = gameStatus === playerNum ? "player_won" : "opp_won";
+                    setStatus(newStatus);
+                } else {
+                    const newStatus = turn === playerNum ? "player_turn" : "opp_turn";
+                    setStatus(newStatus);
+                }
+            };
+        }
+
+        return () => {
+            if (socketRef.current?.readyState === 1) { 
+                socketRef.current?.close();
+            }
+        };
+    }, [router.isReady, router.query]);
+
+
+    if (status === "loading" || !gameID) {
+        return <div>Loading...</div>;
+    }
+
+    return (
+        <div>
+            <HeaderAndNav username={username} />
+            <MuteButton muted={muted} setMuted={setMuted} />
+            <audio ref={musicRef} src={lobbyMusic} loop />
+            {!isAIGame && <RoomIDText status={status} gameID={gameID} playerNum={playerNum} />}
+            <BoardsAndTitles
+                status={status}
+                setStatus={setStatus}
+                popups1={{ hitPopupVisible: hitPopup1Visible, sunkPopupVisible: sunkPopup1Visible }}
+                popups2={{ hitPopupVisible: hitPopup2Visible, sunkPopupVisible: sunkPopup2Visible }}
+                gameID={gameID}
+                playerID={playerID}
+                playerNum={playerNum}
+            />
+            <GameOverPopup status={status} username={username} />
+        </div>
+    );
+}

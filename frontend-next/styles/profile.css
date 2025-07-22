@@ -1,0 +1,18 @@
+main {
+    font-size: 150%;
+    font-weight: bold;
+    margin: 3% 2%;
+}
+
+#account {
+    font-size: 175%;
+    margin-bottom: 1.5em;
+}
+
+#profileSettings input {
+    margin-bottom: 1em;
+}
+
+#profileSettings button {
+    margin: 1em 0 2em 0;
+}

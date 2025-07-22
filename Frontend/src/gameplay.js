@@ -554,13 +554,6 @@ function RoomIDText({status}) {
 // if music is muted, clicking the button unmutes it, and if it is unmuted, clicking mutes it
 function MuteButton({musicRef, muted, setMuted}) {
 
-  // start playing music
-  useEffect(() => {
-    if(!muted) {
-      musicRef.current.play();
-    }
-  });
-
   return (
       <img 
         style={{width: '4em', margin: '.5em 0 0 1em'}} 
@@ -620,7 +613,11 @@ function GamePlay() {
 
     if(socket === undefined) {
       let hostName = window.location.hostname; // allow for multiplayer locally and across computers
-      socket = new WebSocket("ws://"+hostName+":8001/ws/play/"+gameID+"/");
+      const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+      // socket = new WebSocket(protocol + "://"+hostName+"/ws/play/"+gameID+"/");
+      const wsUrl = `${protocol}://${hostName}/ws/play/${gameID}/`;
+      console.log("Connecting to WebSocket at:", wsUrl);  // 👈 Add this
+      socket = new WebSocket(wsUrl);
     }
 
     return (
