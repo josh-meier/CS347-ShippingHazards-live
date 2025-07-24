@@ -35,6 +35,7 @@ ALLOWED_HOSTS = ['web-go884448oss8s8w8soskwkcw', 'localhost', 'redis-go884448oss
 INSTALLED_APPS = [
     'daphne',
     'shdatabase',
+    'accounts',
     'rest_framework',
     'django.contrib.admin',
     'django.contrib.auth',
