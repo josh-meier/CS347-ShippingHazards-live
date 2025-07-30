@@ -6,72 +6,85 @@ import Image from 'next/image';
 
 type HeaderProps = {
     screenName: string;
-    username: string;
 };
 
-function Header({ screenName, username }: HeaderProps) {
+function Header({ screenName }: HeaderProps) {
     const router = useRouter();
+
+    async function handleLogout() {
+        await fetch('/accounts/logout/');
+        router.push('/');
+    }
 
     return (
         <header>
-            <Image src={logo} alt="Logo" id="logo" style={{ cursor: 'pointer' }} onClick={() => router.push(`/home?username=${username}`)} />
+            <Image src={logo} alt="Logo" id="logo" style={{ cursor: 'pointer' }} onClick={() => router.push(`/home`)} />
             <span id="header-text">SHIPPING HAZARDS: A Game By Pink Puffy Rhinos</span>
             <div id="user-info">
                 <p>Hello, {screenName}!</p>
-                <a href="/">Logout</a>
+                <a onClick={handleLogout} style={{ cursor: 'pointer' }}>Logout</a>
             </div>
         </header>
     );
 }
 
-function NavigationBar({ username }: { username: string }) {
+function NavigationBar() {
     const router = useRouter();
 
     function navigateToProfilePage() {
-        let url = "/play/get-player-info/" + username;
-        fetch(url)
-            .then(response => response.json())
-            .then((the_json) => router.push(`/profile?username=${username}&color=${the_json["color_preference"]}&screenName=${the_json["screen_name"]}`))
-            .catch(error => console.error('Error fetching player info: ', error));
+        router.push(`/profile`);
     }
 
     return (
         <nav>
-            <a onClick={() => router.push(`/home?username=${username}`)}>Home</a>
+            <a onClick={() => router.push(`/home`)}>Home</a>
             <span className="dropdown">
                 My Account
                 <span className="dropdown-content">
                     <span onClick={navigateToProfilePage}>Profile & Settings</span>
-                    <a onClick={() => router.push(`/stats?username=${username}`)}>Stats</a>
-                    <a onClick={() => router.push(`/my-games?username=${username}`)}>My Games</a>
+                    <a onClick={() => router.push(`/stats`)}>Stats</a>
+                    <a onClick={() => router.push(`/my-games`)}>My Games</a>
                 </span>
             </span>
-            <a onClick={() => router.push(`/about-us?username=${username}`)}>About Us</a>
+            <a onClick={() => router.push(`/about-us`)}>About Us</a>
         </nav>
     );
 }
 
 export default function HeaderAndNav({ username }: { username: any}) {
     const [screenName, setScreenName] = useState(username);
+    const router = useRouter();
 
-    useEffect(() => {
-        if (username) {
-            let url = `/play/get-player-info/${username}`;
-            fetch(url)
-                .then(response => response.json())
-                .then(the_json => setScreenName(the_json["screen_name"]))
-                .catch(error => console.error('Error fetching player stats: ', error));
+     useEffect(() => {
+        // This useEffect hook will run once when the component mounts
+        async function fetchScreenName() {
+            try {
+                const response = await fetch('/accounts/get_user_info/');
+                if (response.ok) {
+                    const data = await response.json();
+                    setScreenName(data.screen_name);
+                } else {
+                    // Handle cases where the user is not logged in or session expired
+                    // Redirect to login page
+                    router.push('/');
+                }
+            } catch (error) {
+                console.error('Error fetching user info:', error);
+                // Handle network errors, maybe redirect to an error page
+            }
         }
-    }, [username]);
 
-    if (!username) {
+        fetchScreenName();
+    }, []);
+
+    if (!screenName) {
         return null;
     }
 
     return (
         <div>
-            <Header screenName={screenName as string} username={username as string} />
-            <NavigationBar username={username as string} />
+            <Header screenName={screenName as string} />
+            <NavigationBar />
         </div>
     );
 }

@@ -3,22 +3,22 @@ import React, { useState, useEffect } from 'react';
 import HeaderAndNav from '../components/HeaderAndNav';
 import { useRouter } from 'next/router';
 
-function MyGamesTable({ games, username }: { games: any[], username: string }) {
+function MyGamesTable({ games }: { games: any[] }) {
     const router = useRouter();
 
-    function handleClick(game: any) {
-        let url = `/play/get-player-info/${username}`;
-        fetch(url)
-            .then(response => response.json())
-            .then((the_json) => {
-                let playerID = the_json["player_id"];
-                let color = the_json["color_preference"];
-                let boardSize = 10;
-                let playerNum = (game.player1_id === playerID) ? 1 : 2;
-                let existingGame = true;
-                router.push(`/game?gameID=${game.id}&boardSize=${boardSize}&playerID=${playerID}&username=${username}&color=${color}&playerNum=${playerNum}&isAIGame=${game.is_ai_game}&existingGame=${existingGame}`);
-            })
-            .catch(error => console.error('Error fetching player info and new game: ', error));
+    async function handleClick(game: any) {
+        try {
+            const response = await fetch('/accounts/get_user_info/');
+            const userInfo = await response.json();
+            const playerID = userInfo["player_id"];
+            const color = userInfo["color_preference"];
+            let boardSize = 10;
+            let playerNum = (game.player1_id === playerID) ? 1 : 2;
+            let existingGame = true;
+            router.push(`/game?gameID=${game.id}&boardSize=${boardSize}&playerID=${playerID}&color=${color}&playerNum=${playerNum}&isAIGame=${game.is_ai_game}&existingGame=${existingGame}`);
+        } catch (error) {
+            console.error('Error fetching player info and new game: ', error)
+        }
     }
 
     return (
@@ -62,13 +62,12 @@ function MyGamesTable({ games, username }: { games: any[], username: string }) {
 
 export default function MyGamesPage() {
     const router = useRouter();
-    const { username } = router.query;
     const [games, setGames] = useState([]);
     const [filter, setFilter] = useState('all');
 
     useEffect(() => {
         if (router.isReady) {
-            let url = `/${username}/games/${filter}`;
+            let url = `/games/${filter}`;
             fetch(url)
                 .then(response => response.json())
                 .then(data => {
@@ -77,7 +76,7 @@ export default function MyGamesPage() {
                 })
                 .catch(error => console.error('Error fetching games:', error));
         }
-    }, [router.isReady, username, filter]);
+    }, [router.isReady, filter]);
 
     if (!router.isReady) {
         return <div>Loading...</div>;
@@ -85,7 +84,7 @@ export default function MyGamesPage() {
 
     return (
         <div>
-            <HeaderAndNav username={username} />
+            <HeaderAndNav username={null} />
             <div className="toggle-buttons-container">
                 <button
                     className={`toggle-button ${filter === 'all' ? 'active' : ''}`}
@@ -103,7 +102,7 @@ export default function MyGamesPage() {
                     Inactive Games
                 </button>
             </div>
-            <MyGamesTable games={games} username={username as string} />
+            <MyGamesTable games={games} />
         </div>
     );
 }

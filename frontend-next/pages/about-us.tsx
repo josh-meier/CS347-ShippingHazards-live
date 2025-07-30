@@ -4,11 +4,10 @@ import { useRouter } from 'next/router';
 
 export default function AboutUs() {
     const router = useRouter();
-    const { username } = router.query;
 
     return (
         <div>
-            <HeaderAndNav username={username} />
+            <HeaderAndNav username={null} />
             <div id="description">
                 <p>This is a project written in Spring 2024 for CS 347 (Advanced Software Design) at Carleton College in Northfield, MN.</p>
                 <p>The team was:</p>

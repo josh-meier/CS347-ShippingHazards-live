@@ -43,18 +43,17 @@ function StatsTable({ the_json }: { the_json: any }) {
 
 export default function StatsPage() {
     const router = useRouter();
-    const { username } = router.query;
     const [playerStats, setPlayerStats] = useState(null);
 
     useEffect(() => {
         if (router.isReady) {
-            let url = `/play/get-player-info/${username}`;
+            let url = `/accounts/get_user_info/`;
             fetch(url)
                 .then(response => response.json())
                 .then(the_json => setPlayerStats(the_json))
                 .catch(error => console.error('Error fetching player stats: ', error));
         }
-    }, [router.isReady, username]);
+    }, [router.isReady]);
 
     if (!router.isReady) {
         return <div>Loading...</div>;
@@ -62,7 +61,7 @@ export default function StatsPage() {
 
     return (
         <div>
-            <HeaderAndNav username={username} />
+            <HeaderAndNav username={null} />
             <StatsTable the_json={playerStats} />
         </div>
     );

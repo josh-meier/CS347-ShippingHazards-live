@@ -11,9 +11,9 @@ import json
 
 @api_view(['POST'])
 def react_login(request):
-    data = json.loads(request.body)
-    username = data.get('username')
-    password = data.get('password')
+    # data = json.loads(request.body)
+    username = request.data.get('username')
+    password = request.data.get('password')
     user = authenticate(username=username, password=password)
     if user is not None:
         login(request, user)
@@ -23,11 +23,11 @@ def react_login(request):
 
 @api_view(['POST'])
 def react_signup(request):
-    data = json.loads(request.body)
-    username = data.get('username')
-    password = data.get('password')
-    password2 = data.get('password2')
-    screen_name = data.get('screen_name')
+    # data = json.loads(request.body)
+    username = request.data.get('username')
+    password = request.data.get('password')
+    password2 = request.data.get('password2')
+    screen_name = request.data.get('screen_name')
 
     if User.objects.filter(username=username).exists():
         return JsonResponse({'status': 'error', 'message': 'User Already Exists. Please Login.'}, status=400)
@@ -47,10 +47,10 @@ def react_signup(request):
 @permission_classes([IsAuthenticated])
 def react_change_password(request):
     user = request.user
-    data = json.loads(request.body)
-    current_password = data.get('current_password')
-    new_password = data.get('new_password')
-    new_password2 = data.get('new_password2')
+    # data = json.loads(request.body)
+    current_password = request.data.get('current_password')
+    new_password = request.data.get('new_password')
+    new_password2 = request.data.get('new_password2')
 
     if not user.check_password(current_password):
         return JsonResponse({'status': 'error', 'message': 'Your current password is incorrect.'}, status=400)
@@ -70,6 +70,28 @@ def react_change_password(request):
 @ensure_csrf_cookie
 def get_csrf_token(request):
     return JsonResponse({'message': 'CSRF cookie set'})
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_user_info(request):
+    """
+    Returns the currently-logged-in user's player_id, screen_name, and color_preference.
+    """
+    user = request.user
+    try:
+        player = Player.objects.get(user=user)
+    except Player.DoesNotExist:
+        return JsonResponse(
+            { "error": "Player profile not found." },
+            status=404
+        )
+
+    return JsonResponse({
+        "player_id": player.id,
+        "screen_name": player.screen_name,
+        "color_preference": player.color_preference,
+    })
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])

@@ -180,14 +180,14 @@ function ConfirmButton({ status, setStatus, gameID, playerID }: { status: string
     );
 }
 
-function GameOverPopup({ status, username }: { status: string, username: string }) {
+function GameOverPopup({ status }: { status: string }) {
     const router = useRouter();
     if (status !== "player_won" && status !== "opp_won") return null;
     return (
         <div id="gameOverPopup" style={{ visibility: 'visible' }}>
             <div>GAME OVER</div>
             <div>{status === "player_won" ? "You Won!" : "You Lost :("}</div><br />
-            <button onClick={() => router.push(`/home?username=${username}`)}>Back to Home</button>
+            <button onClick={() => router.push(`/home`)}>Back to Home</button>
         </div>
     );
 }
@@ -300,7 +300,6 @@ export default function GamePlay() {
     const musicRef = useRef<HTMLAudioElement | null>(null);
 
     const [status, setStatus] = useState<string>("loading");
-    const [username, setUsername] = useState<string>('');
     const [gameID, setGameID] = useState<string>('');
     const [playerID, setPlayerID] = useState<number>(0);
     const [playerNum, setPlayerNum] = useState<number>(0);
@@ -331,7 +330,7 @@ export default function GamePlay() {
 
         const {
             gameID: gameID_q, boardSize: boardSize_q, playerID: playerID_q,
-            username: username_q, color: shipColor_q, playerNum: playerNum_q,
+            color: shipColor_q, playerNum: playerNum_q,
             isAIGame: isAIGame_q, existingGame: existingGame_q,
         } = router.query;
 
@@ -340,7 +339,6 @@ export default function GamePlay() {
         const pID = parseInt(playerID_q as string, 10);
         const pNum = parseInt(playerNum_q as string, 10);
         
-        setUsername(username_q as string);
         setGameID(gameId);
         setPlayerID(pID);
         setPlayerNum(pNum);
@@ -454,7 +452,7 @@ export default function GamePlay() {
 
     return (
         <div>
-            <HeaderAndNav username={username} />
+            <HeaderAndNav username={null} />
             <MuteButton muted={muted} setMuted={setMuted} />
             <audio ref={musicRef} src={lobbyMusic} loop />
             {!isAIGame && <RoomIDText status={status} gameID={gameID} playerNum={playerNum} />}
@@ -467,7 +465,7 @@ export default function GamePlay() {
                 playerID={playerID}
                 playerNum={playerNum}
             />
-            <GameOverPopup status={status} username={username} />
+            <GameOverPopup status={status} />
         </div>
     );
 }

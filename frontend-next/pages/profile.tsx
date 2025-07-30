@@ -29,6 +29,21 @@ export default function ProfilePage() {
     const [backendErrorVisible, setBackendErrorVisible] = useState(false);
     const [backendErrorText, setBackendErrorText] = useState('');
 
+    function getCookie(name: string): string | null {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
     function attemptPasswordChange(the_json: any) {
         setCurrentPasswordErrorVisible(false);
         setNewPassword1ErrorVisible(false);
@@ -38,23 +53,42 @@ export default function ProfilePage() {
         let success = the_json["status"] === "success";
         let message = the_json["message"];
         if (success) {
-            router.push(`/home?username=${username}`);
+            router.push(`/home`);
         } else {
             setBackendErrorText(message);
             setBackendErrorVisible(true);
         }
     }
 
-    function handlePasswordClick() {
+    async function handlePasswordClick() {
         setCurrentPasswordErrorVisible(currentPassword.length === 0);
         setNewPassword1ErrorVisible(newPassword1.length === 0);
         setNewPassword2ErrorVisible(newPassword2.length === 0);
         if (currentPassword.length > 0 && newPassword1.length > 0 && newPassword2.length > 0) {
-            let url = `/accounts/react_change_password/${username}/${currentPassword}/${newPassword1}/${newPassword2}`;
-            fetch(url)
-                .then(response => response.json())
-                .then(the_json => attemptPasswordChange(the_json))
-                .catch(error => console.error('Error fetching player password change: ', error));
+            try {
+                await fetch('/accounts/csrf/');
+                const csrfToken = getCookie('csrftoken');
+
+                const response = await fetch('/accounts/change_password/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken || '',
+                    },
+                    body: JSON.stringify({
+                        old_password: currentPassword,
+                        new_password1: newPassword1,
+                        new_password2: newPassword2,
+                    }),
+                });
+
+                const the_json = await response.json();
+                attemptPasswordChange(the_json);
+            } catch (error) {
+                console.error('Error during password change:', error);
+                setBackendErrorText('An unexpected error occurred. Please try again.');
+                setBackendErrorVisible(true);
+            }
         }
     }
 

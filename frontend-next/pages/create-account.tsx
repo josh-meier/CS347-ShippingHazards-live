@@ -20,6 +20,21 @@ function AccountCreationFields() {
     const [backendErrorVisible, setBackendErrorVisible] = useState(false);
     const [backendErrorText, setBackendErrorText] = useState('');
 
+    function getCookie(name: string): string | null {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
     function attemptCreation(the_json: any) {
         setUsernameErrorVisible(false);
         setPassword1ErrorVisible(false);
@@ -29,25 +44,45 @@ function AccountCreationFields() {
         let success = the_json["status"] === "success";
         let message = the_json["message"];
         if (success) {
-            router.push(`/home?username=${username}`);
+            router.push(`/home`);
         } else {
             setBackendErrorText(message);
             setBackendErrorVisible(true);
         }
     }
 
-    const onSubmitButtonClick = () => {
+    const onSubmitButtonClick = async () => {
         if (username.length === 0 || password.length === 0 || password2.length === 0 || screenName.length === 0) {
             setUsernameErrorVisible(username.length === 0);
             setPassword1ErrorVisible(password.length === 0);
             setPassword2ErrorVisible(password2.length === 0);
             setScreenNameErrorVisible(screenName.length === 0);
         } else {
-            let url = `/accounts/react_signup/${username}/${password}/${password2}/${screenName}`;
-            fetch(url)
-                .then(response => response.json())
-                .then(the_json => attemptCreation(the_json))
-                .catch(error => console.error('Error fetching account creation/signup: ', error));
+            try {
+                await fetch('/accounts/csrf/');
+                const csrfToken = getCookie('csrftoken');
+
+                const response = await fetch('/accounts/signup/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken || '',
+                    },
+                    body: JSON.stringify({
+                        username,
+                        password,
+                        password2,
+                        screen_name: screenName,
+                    }),
+                });
+
+                const the_json = await response.json();
+                attemptCreation(the_json);
+            } catch (error) {
+                console.error('Error during account creation:', error);
+                setBackendErrorText('An unexpected error occurred. Please try again.');
+                setBackendErrorVisible(true);
+            }
         }
     }
 
