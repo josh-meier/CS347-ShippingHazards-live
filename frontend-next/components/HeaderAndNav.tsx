@@ -37,7 +37,7 @@ function NavigationBar() {
 
     return (
         <nav>
-            <a onClick={() => router.push(`/home`)}>Home</a>
+            <a onClick={() => router.push(`/home`)}>Homes</a>
             <span className="dropdown">
                 My Account
                 <span className="dropdown-content">
@@ -56,6 +56,10 @@ export default function HeaderAndNav({ username }: { username: any}) {
     const router = useRouter();
 
      useEffect(() => {
+        if (router.query.dev) {
+            setScreenName("Dev User");
+            return;
+        }
         // This useEffect hook will run once when the component mounts
         async function fetchScreenName() {
             try {
@@ -75,7 +79,7 @@ export default function HeaderAndNav({ username }: { username: any}) {
         }
 
         fetchScreenName();
-    }, []);
+    }, [router.query.dev]);
 
     if (!screenName) {
         return null;

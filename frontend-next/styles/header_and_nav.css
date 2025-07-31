@@ -2,6 +2,9 @@ header {
     background-color: #ff8ac7;
     color: rgb(1, 1, 1);
     margin: 0;
+    flex-direction:row;
+    align-items: center;
+    display:flex;
 }
   
 header * {
@@ -10,17 +13,21 @@ header * {
 }
   
 header #logo {
+    /* float:inline-start; */
     margin-right: 5%;
-    height: 8em;
+    height: 128px;
+    width: 150px;
 }
   
 #header-text {
+    /* float:left; */
+    text-align:left;
     font-size: 250%;
     font-weight: bold;
 }
 
 header #user-info {
-    float: right;
+    /* float: right; */
     font-size: 160%;
     text-align: right;
     padding: 1%;

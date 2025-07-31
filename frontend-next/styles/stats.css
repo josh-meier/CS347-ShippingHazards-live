@@ -1,7 +1,7 @@
 body {
     font-family: Arial, sans-serif;
     background-color: #f8f8f8; 
-    padding: 20px;
+    /* padding: 20px; */
 }
 
 h1 {
@@ -19,7 +19,7 @@ table {
 }
 
 th, td {
-    padding: 8px;
+    /* padding: 8px; */
     text-align: left;
     border-bottom: 1px solid #ddd; 
 }
