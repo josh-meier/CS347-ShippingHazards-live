@@ -82,7 +82,7 @@ services:
     build:
       context: .
       dockerfile: battleship/Dockerfile
-    command: daphne -b 0.0.0.0 -p 8001 battleship.asgi:application
+    command: daphne -v2 -b 0.0.0.0 -p 8001 battleship.asgi:application
     volumes:
       - ./battleship:/code
       - ./game_logic:/code/game_logic

@@ -329,12 +329,12 @@ export default function GamePlay() {
         if (!router.isReady) return;
 
         const {
-            gameID: gameID_q, boardSize: boardSize_q, playerID: playerID_q,
+            gameID: gameID_q, joinID: joinID_q, boardSize: boardSize_q, playerID: playerID_q,
             color: shipColor_q, playerNum: playerNum_q,
             isAIGame: isAIGame_q, existingGame: existingGame_q,
         } = router.query;
 
-        const gameId = gameID_q as string;
+        const gameId = (gameID_q || joinID_q) as string;
         boardSize = parseInt(boardSize_q as string, 10) || 10;
         const pID = parseInt(playerID_q as string, 10);
         const pNum = parseInt(playerNum_q as string, 10);
