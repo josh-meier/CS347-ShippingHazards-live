@@ -150,7 +150,7 @@ function Board({ myBoard, status, hitPopupVisible, sunkPopupVisible, gameID, pla
 function Instructions({ status }: { status: string }) {
     const messages: { [key: string]: string } = {
         loading_game: "Loading game data; please wait...",
-        setup: "Setup Stage: Click on a ship to select it, then use the Arrow Keys to move it, the Spacebar to rotate, and the Enter key to place it",
+        setup: "Setup Stage: Click on a ship, then use the buttons or Arrow Keys and Spacebar to place it where you want",
         player_turn: "Your Turn: Choose a square on your opponent's board to attack",
         opp_turn: "Waiting for opponent...",
         setup_confirmed: "Waiting for opponent...",
@@ -176,8 +176,8 @@ function ConfirmButton({ status, setStatus, gameID, playerID, isDev }: { status:
     };
 
     return (
-        <div style={{ width: '100%', textAlign: 'center', paddingBottom: "2%" }}>
-            {status === "setup" && <button onClick={handleClick}>Confirm!</button>}
+        <div className="confirm-container">
+            {status === "setup" && <button className="confirm-button" onClick={handleClick}>Confirm!</button>}
         </div>
     );
 }
@@ -256,22 +256,44 @@ function BoardsAndTitles({ status, setStatus, popups1, popups2, gameID, playerID
         return () => document.removeEventListener('keydown', handleKeys);
     }, [handleKeys]);
 
+    const triggerKey = (code: string) => {
+        const evt = new KeyboardEvent('keydown', { code });
+        document.dispatchEvent(evt);
+    };
+
     return (
         <div id="content">
             <div className="content-row">
-                <div className="content-cell" style={{ width: '40%' }}>YOUR BOARD</div>
-                <div className="content-cell" style={{ width: '20%' }}></div>
-                <div className="content-cell" style={{ width: '40%' }}>OPPONENT BOARD</div>
-            </div>
-            <div className="content-row">
                 <div className="content-cell" style={{ width: '40%' }}>
+                    <div className="board-header">
+                        <div className="board-title">YOUR BOARD</div>
+                    </div>
                     <Board myBoard={true} status={status} {...popups1} gameID={gameID} playerID={playerID} />
+                    {status === 'setup' && (
+                        <div className="setup-controls-row">
+                            <div className="setup-controls" role="group" aria-label="Ship placement controls">
+                                <button className="control-btn up" onClick={() => triggerKey('ArrowUp')} aria-label="Move up">▲</button>
+                                <button className="control-btn left" onClick={() => triggerKey('ArrowLeft')} aria-label="Move left">◀</button>
+                                <button className="control-btn center" onClick={() => triggerKey('Space')} aria-label="Rotate">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                        <path d="M14 3.5a8 8 0 0 1 6 6" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round"/>
+                                        <path d="M20 9.5v-4l-3 3" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/>
+                                        <path d="M10 20.5a8 8 0 0 1-6-6" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round"/>
+                                        <path d="M4 14.5v4l3-3" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/>
+                                    </svg>
+                                </button>
+                                <button className="control-btn right" onClick={() => triggerKey('ArrowRight')} aria-label="Move right">▶</button>
+                                <button className="control-btn down" onClick={() => triggerKey('ArrowDown')} aria-label="Move down">▼</button>
+                            </div>
+                        </div>
+                    )}
                 </div>
-                <div className="content-cell" style={{ width: '20%' }}>
-                    <Instructions status={status} /><br />
+                <div className="content-cell" style={{ width: '20%', verticalAlign: 'middle' }}>
+                    <Instructions status={status} />
                     <ConfirmButton status={status} setStatus={setStatus} gameID={gameID} playerID={playerID} isDev={isDev} />
                 </div>
                 <div className="content-cell" style={{ width: '40%' }}>
+                    <div className="board-header"><div className="board-title">OPPONENT BOARD</div></div>
                     <Board myBoard={false} status={status} {...popups2} gameID={gameID} playerID={playerID} />
                 </div>
             </div>
@@ -288,7 +310,7 @@ function RoomIDText({ status, gameID, playerNum }: { status: string, gameID: str
 function MuteButton({ muted, setMuted }: { muted: boolean, setMuted: (muted: boolean) => void }) {
     return (
         <Image
-            style={{ width: '4em', height: '4em', margin: '.5em 0 0 1em', cursor: 'pointer' }}
+            style={{ width: '2em', height: '2em', cursor: 'pointer' }}
             src={muted ? muteIcon : unMuteIcon}
             alt="speaker"
             onClick={() => setMuted(!muted)}
@@ -306,7 +328,7 @@ export default function GamePlay() {
     const [playerID, setPlayerID] = useState<number>(0);
     const [playerNum, setPlayerNum] = useState<number>(0);
     const [isAIGame, setIsAIGame] = useState<boolean>(false);
-    const [muted, setMuted] = useState(false);
+    const [muted, setMuted] = useState(true);
 
     const [hitPopup1Visible, setHitPopup1Visible] = useState(false);
     const [hitPopup2Visible, setHitPopup2Visible] = useState(false);
@@ -471,9 +493,11 @@ export default function GamePlay() {
     }
 
     return (
-        <div>
+        <div className="game-root">
             <HeaderAndNav username={null} />
-            <MuteButton muted={muted} setMuted={setMuted} />
+            <div style={{ position: 'sticky', top: 0, zIndex: 900, display: 'flex', justifyContent: 'flex-end', padding: '.25em 1em 0 1em' }}>
+                <MuteButton muted={muted} setMuted={setMuted} />
+            </div>
             <audio ref={musicRef} src={lobbyMusic} loop />
             {!isDevMode && !isAIGame && <RoomIDText status={status} gameID={gameID} playerNum={playerNum} />}
             <BoardsAndTitles
