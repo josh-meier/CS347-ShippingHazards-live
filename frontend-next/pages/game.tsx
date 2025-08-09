@@ -16,6 +16,7 @@ const lobbyMusic = '/sounds/lobbyMusic.mp3';
 
 // Module-level variables for functions that don't depend on React state/props
 let boardSize: number = 10;
+let numShipsGlobal: number = 4;
 let playerBoard = "-----------a---------a------------cccc----------------b---------b---------b--------------------ddddd";
 let selectedShip: number[][] | null = null;
 let shipColor: string;
@@ -150,7 +151,7 @@ function Board({ myBoard, status, hitPopupVisible, sunkPopupVisible, gameID, pla
 function Instructions({ status }: { status: string }) {
     const messages: { [key: string]: string } = {
         loading_game: "Loading game data; please wait...",
-        setup: "Setup Stage: Click on a ship, then use the buttons or Arrow Keys and Spacebar to place it where you want",
+        setup: "Setup Stage: Click on a ship, then use the buttons or arrow keys and spacebar to place it where you want",
         player_turn: "Your Turn: Choose a square on your opponent's board to attack",
         opp_turn: "Waiting for opponent...",
         setup_confirmed: "Waiting for opponent...",
@@ -261,6 +262,64 @@ function BoardsAndTitles({ status, setStatus, popups1, popups2, gameID, playerID
         document.dispatchEvent(evt);
     };
 
+    function randomizeBoard(): void {
+        // Generate a blank board array
+        const size = boardSize;
+        const lettersForShips = (num: number): number[] => {
+            if (num === 4) return [2, 3, 4, 5];
+            if (num === 5) return [2, 3, 3, 4, 5];
+            if (num === 6) return [2, 3, 3, 4, 4, 5];
+            return [2, 3, 4, 5];
+        };
+        const shipSizes = lettersForShips(numShipsGlobal);
+        const board: string[] = Array(size * size).fill('-');
+
+        const placeOneShip = (shipSize: number, letter: string): boolean => {
+            const horizontal = Math.random() < 0.5;
+            if (horizontal) {
+                const row = Math.floor(Math.random() * size);
+                const col = Math.floor(Math.random() * (size - shipSize));
+                for (let i = 0; i < shipSize; i++) {
+                    if (board[row * size + col + i] !== '-') return false;
+                }
+                for (let i = 0; i < shipSize; i++) board[row * size + col + i] = letter;
+            } else {
+                const row = Math.floor(Math.random() * (size - shipSize));
+                const col = Math.floor(Math.random() * size);
+                for (let i = 0; i < shipSize; i++) {
+                    if (board[(row + i) * size + col] !== '-') return false;
+                }
+                for (let i = 0; i < shipSize; i++) board[(row + i) * size + col] = letter;
+            }
+            return true;
+        };
+
+        let letterIndex = 0;
+        for (const shipSize of shipSizes) {
+            let placed = false;
+            letterIndex += 1;
+            const letter = String.fromCharCode(letterIndex + 96); // a, b, c, ...
+            let guard = 0;
+            while (!placed && guard < 500) {
+                placed = placeOneShip(shipSize, letter);
+                guard++;
+            }
+            if (!placed) return; // give up if pathological
+        }
+
+        // Apply to UI
+        playerBoard = board.join('');
+        selectedShip = null;
+        for (let r = 0; r < size; r++) {
+            for (let c = 0; c < size; c++) {
+                const id = `mysquare-${r}-${c}`;
+                const el = document.getElementById(id) as HTMLElement | null;
+                if (!el) continue;
+                el.style.backgroundColor = playerBoard[r * size + c] !== '-' ? shipColor : 'rgba(0, 0, 0, 0)';
+            }
+        }
+    }
+
     return (
         <div id="content">
             <div className="content-row">
@@ -285,6 +344,11 @@ function BoardsAndTitles({ status, setStatus, popups1, popups2, gameID, playerID
                                 <button className="control-btn right" onClick={() => triggerKey('ArrowRight')} aria-label="Move right">▶</button>
                                 <button className="control-btn down" onClick={() => triggerKey('ArrowDown')} aria-label="Move down">▼</button>
                             </div>
+                        </div>
+                    )}
+                    {status === 'setup' && (
+                        <div className="setup-controls-row">
+                            <button className="randomize-button" onClick={randomizeBoard}>Randomize</button>
                         </div>
                     )}
                 </div>
@@ -352,18 +416,18 @@ export default function GamePlay() {
         const {
             gameID: gameID_q, joinID: joinID_q, boardSize: boardSize_q, playerID: playerID_q,
             color: shipColor_q, playerNum: playerNum_q,
-            isAIGame: isAIGame_q, existingGame: existingGame_q,
+            isAIGame: isAIGame_q, existingGame: existingGame_q, numShips: numShips_q,
         } = router.query;
 
         const gameIdRaw = (gameID_q || joinID_q) as string | undefined;
-        const parsedBoardSize = parseInt(boardSize_q as string, 10) || 10;
-        boardSize = parsedBoardSize;
-        const pIDRaw = parseInt(playerID_q as string, 10);
-        const pNumRaw = parseInt(playerNum_q as string, 10);
+        boardSize = parseInt(boardSize_q as string, 10) || 10;
+        const pID = parseInt(playerID_q as string, 10);
+        const pNum = parseInt(playerNum_q as string, 10);
+        numShipsGlobal = parseInt(numShips_q as string, 10) || 4;
 
         let effectiveGameId = gameIdRaw;
-        let effectivePID = !isNaN(pIDRaw) ? pIDRaw : undefined;
-        let effectivePNUM = !isNaN(pNumRaw) ? pNumRaw : undefined;
+        let effectivePID = !isNaN(pID) ? pID : undefined;
+        let effectivePNUM = !isNaN(pNum) ? pNum : undefined;
         let effectiveShipColor = (shipColor_q as string) || '#ff8ac7';
         if (effectiveShipColor && effectiveShipColor[0] !== '#') {
             effectiveShipColor = '#' + effectiveShipColor;
@@ -386,8 +450,8 @@ export default function GamePlay() {
 
         // Normal mode
         setGameID((gameIdRaw as string) || '');
-        setPlayerID(!isNaN(pIDRaw) ? pIDRaw : 0);
-        setPlayerNum(!isNaN(pNumRaw) ? pNumRaw : 0);
+        setPlayerID(!isNaN(pID) ? pID : 0);
+        setPlayerNum(!isNaN(pNum) ? pNum : 0);
         setIsAIGame(isAIGame_q === 'true');
         shipColor = effectiveShipColor;
 

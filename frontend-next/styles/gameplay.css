@@ -296,3 +296,30 @@ button {
         padding-bottom: 72px; /* space for thumbs/safe area */
     }
 }
+
+/* Randomize button under setup controls */
+.randomize-button {
+    cursor: pointer;
+    border: 0;
+    line-height: 2.2;
+    padding: 0.35em 1.2em;
+    font-size: 1.05rem;
+    font-family: Georgia, serif;
+    font-weight: bold;
+    text-align: center;
+    color: #fff;
+    text-shadow: 1px 1px 1px rgba(0,0,0,0.4);
+    border-radius: 10px;
+    background-color: #ff8ac7;
+    background-image: linear-gradient(to top left, rgba(0,0,0,0.2), rgba(0,0,0,0.2) 30%, rgba(0,0,0,0));
+    box-shadow: inset 2px 2px 3px rgba(255,255,255,0.6), inset -2px -2px 3px rgba(0,0,0,0.35), 0 4px 10px rgba(0,0,0,0.12);
+}
+.randomize-button:hover { background-color: #ff9ec4; }
+.randomize-button:active { transform: translateY(1px); }
+
+@media (max-width: 1000px) and (min-width: 651px) {
+    .randomize-button { font-size: 1rem; padding: 0.3em 1.1em; }
+}
+@media (max-width: 650px) {
+    .randomize-button { font-size: 0.95rem; padding: 0.28em 1em; }
+}
