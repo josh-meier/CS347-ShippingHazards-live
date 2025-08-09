@@ -5,9 +5,10 @@
 
 .inputBox {
     height: 48px;
-    width: 400px;
+    width: min(390px, 80vw);   /* responsive field width */
     font-size: large;
     border-radius: 8px;
     border: 1px solid grey;
     padding-left: 8px;
+    margin-right: 16px;
 }

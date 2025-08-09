@@ -23,6 +23,9 @@
     padding: 10px;
     position: center;
     border-radius: 20px;
+    width: 420px;              /* ideal desktop width */
+    max-width: 92vw;           /* shrink on small screens */
+    box-sizing: border-box;    /* include padding in width */
 }
 
 
@@ -36,6 +39,11 @@
     justify-content: center;
     font-family: Georgia, serif;
     margin-bottom: 3%;
+}
+
+/* Ensure the inner content cannot overflow viewport horizontally */
+.loginContainer, .loginButtons, .inputContainer {
+    max-width: 92vw;
 }
 
 .resultContainer,
@@ -88,4 +96,52 @@
 
 .inputContainer {
     margin: 1em 0;
+}
+
+/* Login button stack layout */
+.loginButtons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Make stacked buttons full width */
+.loginButtons .inputButton {
+    width: 100%;
+    margin: 0;
+}
+
+.btn-login { background-color: #000; }
+.btn-guest { background-color: #7a7a7a; }
+.btn-signup { background-color: #c0c0c0; color: #000; text-shadow: none; }
+
+.hintText {
+    color: #707070;
+    font-size: 14px;
+    text-align: left;
+    margin: 6px 2px -4px 2px;
+}
+
+/* divider with small horizontal line and centered "or" */
+.login-divider {
+    position: relative;
+    text-align: center;
+    margin: 0px 0 0px 0;
+}
+.login-divider::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #d0d0d0;
+}
+.login-divider span {
+    position: relative;
+    display: inline-block;
+    padding: 0 10px;
+    background: white;
+    color: #707070;
+    font-size: 12px;
 }

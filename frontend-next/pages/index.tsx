@@ -74,14 +74,43 @@ function LoginFields() {
         }
     }
 
+    const guestLogin = async () => {
+        try {
+            await fetch('/accounts/csrf/');
+            const csrfToken = getCookie('csrftoken');
+            const resp = await fetch('/accounts/guest_login/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken || '',
+                },
+                body: JSON.stringify({}),
+            });
+            const json = await resp.json();
+            if (json.status === 'success') {
+                router.push('/home');
+            } else {
+                setBackendErrorText('Unable to start guest session.');
+                setBackendErrorVisible(true);
+            }
+        } catch (e) {
+            console.error('Guest login failed:', e);
+            setBackendErrorText('Unable to start guest session.');
+            setBackendErrorVisible(true);
+        }
+    };
+
     return (
         <div>
             <TextFieldWithError placeholder={"Username"} value={username} setValue={setUsername} errorVisible={usernameErrorVisible} />
             <TextFieldWithError password={true} placeholder={"Password"} value={password} setValue={setPassword} errorVisible={passwordErrorVisible} />
             <label className="errorLabel" style={{ display: backendErrorVisible ? "block" : "none" }}>{backendErrorText}</label>
-            <div className="inputContainer">
-                <input id="loginButton" className="inputButton" type="button" onClick={onSubmitButtonClick} value={'Submit'} />
-                <input className="inputButton" type="button" onClick={() => router.push(`/create-account?fillerUsername=${username}`)} value={'Create Account'} />
+            <div className="loginButtons">
+                <input id="loginButton" className="inputButton btn-guest" type="button" onClick={onSubmitButtonClick} value={'Login'} />
+                <div className="hintText">Don’t have an account yet?</div>
+                <input className="inputButton btn-guest" type="button" onClick={guestLogin} value={'Login as guest'} />
+                <div className="login-divider"><span>or</span></div>
+                <input className="inputButton btn-guest" type="button" onClick={() => router.push(`/create-account?fillerUsername=${username}`)} value={'Create an account'} />
             </div>
         </div>
     );
@@ -107,9 +136,9 @@ export default function Login() {
         <div className="mainContainer">
             <div className='loginContainer'>
                 <div className="gametitle">
-                    <div>BATTLESHIP</div>
+                    <div>SHIPPING HAZARDS</div>
                 </div>
-                <div className="titleContainer">Login</div>
+                <div className="titleContainer">Log in</div>
                 <LoginFields />
             </div>
         </div>
