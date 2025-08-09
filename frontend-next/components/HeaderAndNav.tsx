@@ -19,7 +19,10 @@ function Header({ screenName }: HeaderProps) {
     return (
         <header>
             <Image src={logo} alt="Logo" id="logo" style={{ cursor: 'pointer' }} onClick={() => router.push(`/home`)} />
-            <span id="header-text">SHIPPING HAZARDS: A Game By Pink Puffy Rhinos</span>
+            <div id="header-text-container">
+                <div id="header-text">SHIPPING HAZARDS</div>
+                <div id="header-subtitle">A Battleship Game by Pink Puffy Rhinos</div>
+            </div>
             <div id="user-info">
                 <p>Hello, {screenName}!</p>
                 <a onClick={handleLogout} style={{ cursor: 'pointer' }}>Logout</a>
@@ -37,11 +40,11 @@ function NavigationBar() {
 
     return (
         <nav>
-            <a onClick={() => router.push(`/home`)}>Homes</a>
-            <span className="dropdown">
+            <a onClick={() => router.push(`/home`)}>Home</a>
+            <span className="dropdown" tabIndex={0}>
                 My Account
                 <span className="dropdown-content">
-                    <span onClick={navigateToProfilePage}>Profile & Settings</span>
+                    <a onClick={navigateToProfilePage}>Profile & Settings</a>
                     <a onClick={() => router.push(`/stats`)}>Stats</a>
                     <a onClick={() => router.push(`/my-games`)}>My Games</a>
                 </span>
@@ -86,7 +89,7 @@ export default function HeaderAndNav({ username }: { username: any}) {
     }
 
     return (
-        <div>
+        <div style={{ width: '100%' }}>
             <Header screenName={screenName as string} />
             <NavigationBar />
         </div>

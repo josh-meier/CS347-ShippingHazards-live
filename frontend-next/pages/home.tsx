@@ -187,7 +187,7 @@ export default function HomePage() {
     }
 
     return (
-        <div>
+        <div style={{ width: '100%', minHeight: '100vh' }}>
             <HeaderAndNav username={null} />
             <div className="buttons-container">
                 <PlayMultiplayerButton />

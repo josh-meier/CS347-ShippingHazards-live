@@ -2,14 +2,22 @@ header {
     background-color: #ff8ac7;
     color: rgb(1, 1, 1);
     margin: 0;
-    flex-direction:row;
+    padding: 0;
+    flex-direction: row;
     align-items: center;
-    display:flex;
+    display: flex;
+    width: 100%;
+    box-sizing: border-box;
+    position: relative;
+    overflow: hidden;
+    left: 0;
+    right: 0;
 }
   
 header * {
     vertical-align: middle;
     margin: 0;
+    box-sizing: border-box;
 }
   
 header #logo {
@@ -17,13 +25,32 @@ header #logo {
     margin-right: 5%;
     height: 128px;
     width: 150px;
+    flex-shrink: 0;
 }
   
+#header-text-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+}
+
 #header-text {
     /* float:left; */
-    text-align:left;
+    text-align: left;
     font-size: 250%;
     font-weight: bold;
+    margin: 0;
+    line-height: 1.2;
+}
+
+#header-subtitle {
+    text-align: left;
+    font-size: 120%;
+    font-weight: normal;
+    margin: 0;
+    line-height: 1.2;
+    color: rgba(0, 0, 0, 0.7);
 }
 
 header #user-info {
@@ -31,6 +58,8 @@ header #user-info {
     font-size: 160%;
     text-align: right;
     padding: 1%;
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 
 header #user-info a {
@@ -44,20 +73,24 @@ nav {
     color: white;
     display: block;
     font-size: 150%;
+    width: 100%;
+    box-sizing: border-box;
+    left: 0;
+    right: 0;
 }
   
 nav a, .dropdown{
     padding: 1.2% 3%;
     background-color: black;
     color: inherit;
-    display: inline;
+    display: inline-block;
     font-weight: bold;
     text-decoration: none;
     text-align: center;
     cursor: pointer;
 }
 
-nav a:hover {
+nav a:hover, .dropdown:hover {
     background-color: white;
     color: black;
 }
@@ -67,14 +100,39 @@ nav a:hover {
     display: inline-block;
 }
 
+/* Caret indicator for dropdown trigger */
+.dropdown::after {
+    content: '▾';
+    display: inline-block;
+    margin-left: 6px;
+    font-size: 0.8em;
+    transition: transform 0.15s ease;
+}
+
+.dropdown:hover::after,
+.dropdown:focus-within::after {
+    transform: rotate(180deg);
+}
+
 .dropdown-content {
     display: none;
     position: absolute;
     background-color: black;
-    min-width: 160px;
+    top: calc(100% - 4px);
+    left: 0;
+    min-width: 100%;
+    width: max-content;
+    white-space: nowrap;
     box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
-    z-index: 1;
-    padding-top: 1em;
+    z-index: 10;
+    border: 1px solid #333;
+}
+
+/* Keep open while hovering the panel as well */
+.dropdown:hover .dropdown-content,
+.dropdown:focus-within .dropdown-content,
+.dropdown-content:hover {
+    display: block;
 }
 
 .dropdown-content * {
@@ -90,7 +148,88 @@ nav a:hover {
     color: black;
 }
 
-.dropdown:hover .dropdown-content {
-    display: block;
+/* Responsive design for smaller screens */
+@media (max-width: 768px) {
+    header {
+        flex-wrap: wrap;
+        padding: 0 10px;
+    }
+    
+    header #logo {
+        height: 80px;
+        width: 100px;
+        margin-right: 3%;
+    }
+    
+    #header-text-container {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    #header-text {
+        font-size: 180%;
+    }
+    
+    #header-subtitle {
+        font-size: 100%;
+    }
+    
+    header #user-info {
+        font-size: 120%;
+        padding: 0.5%;
+    }
+}
+
+@media (max-width: 480px) {
+    header {
+        flex-direction: row;
+        align-items: flex-start;
+        padding: 10px;
+        flex-wrap: wrap;
+    }
+    
+    header #logo {
+        height: 60px;
+        width: 80px;
+        margin-right: 10px;
+        margin-bottom: 0;
+        flex-shrink: 0;
+    }
+    
+    #header-text-container {
+        flex: 1;
+        min-width: 0;
+        margin-bottom: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        min-height: 60px;
+    }
+    
+    #header-text {
+        font-size: 140%;
+        margin-bottom: 2px;
+    }
+    
+    #header-subtitle {
+        font-size: 90%;
+    }
+    
+    header #user-info {
+        font-size: 100%;
+        width: 100%;
+        text-align: left;
+        padding: 0;
+        margin-top: 10px;
+        flex-basis: 100%;
+    }
+    
+    nav {
+        font-size: 120%;
+    }
+    
+    nav a, .dropdown {
+        padding: 1% 2%;
+    }
 }
 
