@@ -1,6 +1,7 @@
 import HeaderAndNav from '../components/HeaderAndNav';
+import BoardsPreview from '../components/BoardsPreview';
 import { useRouter } from 'next/router';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import TextFieldWithError from '../components/TextFieldWithError';
 
 const boardSize = 10;
@@ -107,7 +108,7 @@ function PlayMultiplayerButton() {
 
     return (
         <div>
-            <button className="button" type="button" onClick={openPopup}>Multiplayer</button>
+            <button className="button" type="button" onClick={openPopup}>Play with a friend</button>
             {popupOpen && <MultiplayerPopup closePopup={closePopup} joinID={joinID} setJoinID={setJoinID} joinErrorVisible={joinErrorVisible} setJoinErrorVisible={setJoinErrorVisible} />} 
         </div>
     );
@@ -134,7 +135,7 @@ function PlayMainCompButton() {
 
     return (
         <div>
-            <button className="button" type="button" onClick={openPopup}>Play AI</button>
+            <button className="button" type="button" onClick={openPopup}>Play with a CPU</button>
             {popupOpen && <Popup closePopup={closePopup} />}
         </div>
     );
@@ -180,6 +181,9 @@ function HowToPlayButton() {
 
 export default function HomePage() {
     const router = useRouter();
+    useEffect(() => {
+        router.prefetch('/game').catch(() => {});
+    }, [router]);
 
     // Wait for the router to be ready
     if (!router.isReady) {
@@ -189,10 +193,13 @@ export default function HomePage() {
     return (
         <div style={{ width: '100%', minHeight: '100vh' }}>
             <HeaderAndNav username={null} />
-            <div className="buttons-container">
-                <PlayMultiplayerButton />
-                <PlayMainCompButton />
-                <HowToPlayButton />
+            <div className="home-boards-backdrop">
+                <BoardsPreview />
+                <div className="buttons-container">
+                    <PlayMultiplayerButton />
+                    <PlayMainCompButton />
+                    <HowToPlayButton />
+                </div>
             </div>
         </div>
     );
