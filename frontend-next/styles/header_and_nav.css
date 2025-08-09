@@ -64,6 +64,7 @@ header #user-info {
 
 header #user-info a {
     color: black;
+    text-decoration: underline;
 }
 
 nav {
