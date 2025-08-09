@@ -190,7 +190,7 @@ function GameOverPopup({ status }: { status: string }) {
         <div id="gameOverPopup" style={{ visibility: 'visible' }}>
             <div>GAME OVER</div>
             <div>{status === "player_won" ? "You Won!" : "You Lost :("}</div><br />
-            <button onClick={() => router.push(`/home`)}>Back to Home</button>
+            <button className="confirm-button" onClick={() => router.push(`/home`)}>Back to Home</button>
         </div>
     );
 }
@@ -198,8 +198,13 @@ function GameOverPopup({ status }: { status: string }) {
 function ComicPopup({ isVisible, image }: { isVisible: boolean, image: any }) {
     if (!isVisible) return null;
     return (
-        <div style={{ width: '120%', display: 'block', position: 'absolute', top: '5%', left: '-10%' }}>
-            <Image style={{ width: '100%' }} src={image} alt="Comic-book style popup" />
+        <div style={{ width: '120%', display: 'block', zIndex: 1000, position: 'absolute', top: '5%', left: '-10%' }}>
+            <Image
+                src={image}
+                alt="Comic-book style popup"
+                style={{ width: '100%', height: 'auto', display: 'block' }}
+                sizes="(max-width: 650px) 98vw, (max-width: 1000px) 50vw, 40vw"
+            />
         </div>
     );
 }
