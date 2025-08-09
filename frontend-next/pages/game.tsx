@@ -1,5 +1,5 @@
 import HeaderAndNav from '../components/HeaderAndNav';
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import Image from 'next/image';
 import hitImage from '../public/images/HitPopup.png';
@@ -158,7 +158,7 @@ function Instructions({ status }: { status: string }) {
     return <div id="gameplay-instructions">{messages[status] || ""}</div>;
 }
 
-function ConfirmButton({ status, setStatus, gameID, playerID }: { status: string, setStatus: (status: string) => void, gameID: string, playerID: number }) {
+function ConfirmButton({ status, setStatus, gameID, playerID, isDev }: { status: string, setStatus: (status: string) => void, gameID: string, playerID: number, isDev: boolean }) {
     const handleClick = () => {
         if (selectedShip !== null) {
             selectedShip.forEach(ship => {
@@ -169,8 +169,10 @@ function ConfirmButton({ status, setStatus, gameID, playerID }: { status: string
         }
         console.log("DEBUG: ConfirmButton clicked.");
         setStatus("setup_confirmed");
-        fetch(`/play/confirm-ships/${gameID}/${playerID}/${playerBoard}`)
-            .catch(error => console.error('Error fetching confirm ships:', error));
+        if (!isDev) {
+            fetch(`/play/confirm-ships/${gameID}/${playerID}/${playerBoard}`)
+                .catch(error => console.error('Error fetching confirm ships:', error));
+        }
     };
 
     return (
@@ -201,8 +203,8 @@ function ComicPopup({ isVisible, image }: { isVisible: boolean, image: any }) {
     );
 }
 
-function BoardsAndTitles({ status, setStatus, popups1, popups2, gameID, playerID, playerNum }:
-    { status: string, setStatus: (status: string) => void, popups1: any, popups2: any, gameID: string, playerID: number, playerNum: number }) {
+function BoardsAndTitles({ status, setStatus, popups1, popups2, gameID, playerID, playerNum, isDev }:
+    { status: string, setStatus: (status: string) => void, popups1: any, popups2: any, gameID: string, playerID: number, playerNum: number, isDev: boolean }) {
 
     const handleKeys = useCallback((e: KeyboardEvent) => {
         if (selectedShip !== null && status === "setup") {
@@ -267,7 +269,7 @@ function BoardsAndTitles({ status, setStatus, popups1, popups2, gameID, playerID
                 </div>
                 <div className="content-cell" style={{ width: '20%' }}>
                     <Instructions status={status} /><br />
-                    <ConfirmButton status={status} setStatus={setStatus} gameID={gameID} playerID={playerID} />
+                    <ConfirmButton status={status} setStatus={setStatus} gameID={gameID} playerID={playerID} isDev={isDev} />
                 </div>
                 <div className="content-cell" style={{ width: '40%' }}>
                     <Board myBoard={false} status={status} {...popups2} gameID={gameID} playerID={playerID} />
@@ -311,19 +313,16 @@ export default function GamePlay() {
     const [sunkPopup1Visible, setSunkPopup1Visible] = useState(false);
     const [sunkPopup2Visible, setSunkPopup2Visible] = useState(false);
 
-    // Use a ref to hold the latest state values to prevent stale closures in the WebSocket handler
     const stateRef = useRef({playerID, playerNum, muted, status});
     useEffect(() => {
         stateRef.current = {playerID, playerNum, muted, status};
     }, [playerID, playerNum, muted, status]);
 
-
-    useEffect(() => {
-        if (musicRef.current) {
-            musicRef.current.volume = 0.5;
-            muted ? musicRef.current.pause() : musicRef.current.play().catch(e => console.log("Audio play failed", e));
-        }
-    }, [muted]);
+    const isDevMode = useMemo(() => {
+        const devParam = router.query.dev;
+        if (Array.isArray(devParam)) return devParam.includes('true');
+        return devParam === 'true';
+    }, [router.query.dev]);
 
     useEffect(() => {
         if (!router.isReady) return;
@@ -334,24 +333,45 @@ export default function GamePlay() {
             isAIGame: isAIGame_q, existingGame: existingGame_q,
         } = router.query;
 
-        const gameId = (gameID_q || joinID_q) as string;
-        boardSize = parseInt(boardSize_q as string, 10) || 10;
-        const pID = parseInt(playerID_q as string, 10);
-        const pNum = parseInt(playerNum_q as string, 10);
-        
-        setGameID(gameId);
-        setPlayerID(pID);
-        setPlayerNum(pNum);
-        setIsAIGame(isAIGame_q === 'true');
-        shipColor = shipColor_q as string;
+        const gameIdRaw = (gameID_q || joinID_q) as string | undefined;
+        const parsedBoardSize = parseInt(boardSize_q as string, 10) || 10;
+        boardSize = parsedBoardSize;
+        const pIDRaw = parseInt(playerID_q as string, 10);
+        const pNumRaw = parseInt(playerNum_q as string, 10);
 
-        if (shipColor && shipColor[0] !== '#') {
-            shipColor = '#' + shipColor;
+        let effectiveGameId = gameIdRaw;
+        let effectivePID = !isNaN(pIDRaw) ? pIDRaw : undefined;
+        let effectivePNUM = !isNaN(pNumRaw) ? pNumRaw : undefined;
+        let effectiveShipColor = (shipColor_q as string) || '#ff8ac7';
+        if (effectiveShipColor && effectiveShipColor[0] !== '#') {
+            effectiveShipColor = '#' + effectiveShipColor;
         }
+
+        // In dev mode, fill in defaults if missing and skip server/ws
+        if (isDevMode) {
+            if (!effectiveGameId) effectiveGameId = 'DEVGAME';
+            if (effectivePID === undefined) effectivePID = 999;
+            if (effectivePNUM === undefined) effectivePNUM = 1;
+
+            setGameID(effectiveGameId);
+            setPlayerID(effectivePID);
+            setPlayerNum(effectivePNUM);
+            setIsAIGame(true);
+            shipColor = effectiveShipColor;
+            setStatus('setup');
+            return;
+        }
+
+        // Normal mode
+        setGameID((gameIdRaw as string) || '');
+        setPlayerID(!isNaN(pIDRaw) ? pIDRaw : 0);
+        setPlayerNum(!isNaN(pNumRaw) ? pNumRaw : 0);
+        setIsAIGame(isAIGame_q === 'true');
+        shipColor = effectiveShipColor;
 
         setStatus(existingGame_q === 'true' ? 'loading_game' : 'setup');
 
-        if (typeof window !== 'undefined' && gameId) {
+        if (!isDevMode && typeof window !== 'undefined' && gameIdRaw) {
             console.log("LOCATION:", {
                 href:     window.location.href,
                 protocol: window.location.protocol,
@@ -364,8 +384,8 @@ export default function GamePlay() {
             const hostName = window.location.host.includes("3001")
                                 ? `${window.location.hostname}:8001`   // → dev: localhost:8001
                                 : window.location.host;                // → prod: shippinghazards.com
-            const wsUrl = `${protocol}://${hostName}/ws/play/${gameId}/`;
-            
+            const wsUrl = `${protocol}://${hostName}/ws/play/${gameIdRaw}/`;
+
             console.log("DEBUG: Connecting to WebSocket at:", wsUrl);
             const socket = new WebSocket(wsUrl);
             socketRef.current = socket;
@@ -439,11 +459,11 @@ export default function GamePlay() {
         }
 
         return () => {
-            if (socketRef.current?.readyState === 1) { 
+            if (!isDevMode && socketRef.current?.readyState === 1) { 
                 socketRef.current?.close();
             }
         };
-    }, [router.isReady, router.query]);
+    }, [router.isReady, router.query, isDevMode]);
 
 
     if (status === "loading" || !gameID) {
@@ -455,7 +475,7 @@ export default function GamePlay() {
             <HeaderAndNav username={null} />
             <MuteButton muted={muted} setMuted={setMuted} />
             <audio ref={musicRef} src={lobbyMusic} loop />
-            {!isAIGame && <RoomIDText status={status} gameID={gameID} playerNum={playerNum} />}
+            {!isDevMode && !isAIGame && <RoomIDText status={status} gameID={gameID} playerNum={playerNum} />}
             <BoardsAndTitles
                 status={status}
                 setStatus={setStatus}
@@ -464,6 +484,7 @@ export default function GamePlay() {
                 gameID={gameID}
                 playerID={playerID}
                 playerNum={playerNum}
+                isDev={isDevMode}
             />
             <GameOverPopup status={status} />
         </div>

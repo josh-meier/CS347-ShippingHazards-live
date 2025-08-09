@@ -72,6 +72,16 @@ function NewGameButton({ text, isAI, opponentID }: any) {
     }
 
     async function handleClick() {
+        // Dev mode: skip backend and route directly with dummy values
+        if (router.query.dev) {
+            const gameID = 'DEVGAME';
+            const playerID = 999;
+            const color = '#ff8ac7';
+            const playerNum = 1;
+            const existingGame = false;
+            router.push(`/game?gameID=${gameID}&boardSize=${boardSize}&playerID=${playerID}&color=${color}&playerNum=${playerNum}&isAIGame=${isAI}&existingGame=${existingGame}&dev=true`);
+            return;
+        }
         try {
             const response = await fetch('/accounts/get_user_info/');
             const userInfo = await response.json();
