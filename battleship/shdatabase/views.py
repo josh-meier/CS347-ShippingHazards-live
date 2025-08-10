@@ -132,11 +132,14 @@ def new_game(request, player1_id, player2_id, num_ships, board_size, is_ai_game)
     game = Game()
     if is_ai_game == "true":
         game.is_ai_game = True
+        if not Player.objects.filter(id=player2_id).exists():
+            ai_user = User.objects.create_user(username=f"ai_player_{player2_id}", password="password")
+            Player.objects.create(id=player2_id, user=ai_user, screen_name=f"AI Player {player2_id}", is_ai_player=True)
     elif is_ai_game == "false":
-        game.is_ai_game = False              
+        game.is_ai_game = False
     else:
         raise ValueError("is_ai_game must be 'true' or 'false'")
-    
+
     game.player1_id = player1_id
     game.player2_id = player2_id
     game.board1ID = new_board(board_size)
@@ -144,11 +147,11 @@ def new_game(request, player1_id, player2_id, num_ships, board_size, is_ai_game)
     game.turn = 1
     game.status = 0
     game.num_ships = num_ships
-    game.winner = 0 
+    game.winner = 0
     game.loser = 0
     game.save()
 
-    if is_ai_game:
+    if game.is_ai_game:
         requests.get('http://ai-server:5555/new-game/' + str(player1_id) + '/' + str(player2_id)  + '/' + 
                     str(num_ships) + '/' + str(board_size) + '/' + str(game.id))
 
@@ -192,13 +195,21 @@ def confirm_ships(request, game_id, player_id, ship_board):
     """
     API endpoint that saves a player's ship_board and returns it.
     """
-    game = Game.objects.get(id = game_id)
-    if game.player1_id == player_id:
+    try:
+        game = Game.objects.get(id = game_id)
+    except Game.DoesNotExist:
+        return JsonResponse({'error': 'Game not found'}, status=404)
+    
+    if game.player1_id == int(player_id):
         game.player1_ship_status = 1
         game.save()
-    elif game.player2_id == player_id:
+    elif game.player2_id == int(player_id):
         game.player2_ship_status = 1
         game.save()
+    else:
+        print(f"[CONFIRM_SHIPS] Warning: player_id {player_id} does not match either player1_id ({game.player1_id}) or player2_id ({game.player2_id})", flush=True)
+
+        
 
     board = get_player_board(game, player_id)
     board.ship_board = ship_board
@@ -215,6 +226,7 @@ def confirm_ships(request, game_id, player_id, ship_board):
             "message": "%s" % ws_get_state(game_id, player_id)
         }
     )
+    print("sent updated state", flush=True)
     return JsonResponse({"ship_board": board.ship_board})
        
 def get_opponent(game, player_id):

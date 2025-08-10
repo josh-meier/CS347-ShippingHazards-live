@@ -25,7 +25,19 @@ SECRET_KEY = 'django-insecure-tgo&kn!)zlbz5#p^xvq5o%y4+rk(41$nwy6!c0r+q*hyb_f27=
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['web-go884448oss8s8w8soskwkcw', 'localhost', 'redis-go884448oss8s8w8soskwkcw', '*']
+USE_X_FORWARDED_HOST = True
+
+ALLOWED_HOSTS = ['web-go884448oss8s8w8soskwkcw', 'localhost', 'redis-go884448oss8s8w8soskwkcw', 'shippinghazards.com','167.88.44.174','*']
+
+
+# Allow CSRF from our frontends (local dev and production)
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost',
+    'http://localhost:3000',
+    'http://127.0.0.1',
+    'http://167.88.44.174',
+    'https://shippinghazards.com',
+]
 
 
 # Application definition
@@ -33,6 +45,7 @@ ALLOWED_HOSTS = ['web-go884448oss8s8w8soskwkcw', 'localhost', 'redis-go884448oss
 INSTALLED_APPS = [
     'daphne',
     'shdatabase',
+    'accounts',
     'rest_framework',
     'django.contrib.admin',
     'django.contrib.auth',

@@ -48,6 +48,7 @@ def placeShips(num_ships, board_size):
         ship_letter = chr(ship_index + 96) 
         while placed == False:
             placed = placeOneShip(size, ship_board, ship_letter)
+    print("placed ships", flush=True)
 
     return ''.join(ship_board)
 
@@ -92,7 +93,7 @@ class BattleShipAI:
         while self.attackBoard[index] != "-":
             # index += 1
             index = random.randint(0,len(self.attackBoard)-1)
-        print("returning random attack", flush=True)
+        print("returning random attack")
 
         return getCoords(index, self.boardSize)
     
@@ -109,7 +110,7 @@ class BattleShipAI:
             5: ["a", "b", "c", "d", "e"],
             6: ["a", "b", "c", "d", "e", "f"]
         }
-        print("in smallest ship size fn", flush=True)
+        print("in smallest ship size fn")
         print("opponent combined board is",self.opponentCombinedBoard)
         possibleShips = shipChars[self.numShips]
         index = 0
@@ -118,7 +119,7 @@ class BattleShipAI:
         for ship in possibleShips:
             for char in self.opponentCombinedBoard:
                 if ship == char:
-                    print("found ship char", flush=True)
+                    print("found ship char")
                     return ships_composition[self.numShips][index]
             index = index + 1
 
@@ -145,27 +146,27 @@ class BattleShipAI:
     # function structure from: https://towardsdatascience.com/coding-an-intelligent-battleship-agent-bf0064a4b319
     # uses smallest ship size to narrow down coordinates that the ship must be on
     def betterRandomAttack(self):
-        print("entered better random fn", flush=True)
+        print("entered better random fn")
 
         # determine which is the smallest ship left on the board
         smallestShipSize = self.getSmallestShipSizeLeft()
-        print("got smallest ships size: ", smallestShipSize, flush=True)
+        print("got smallest ships size: ", smallestShipSize)
 
         while True:
             guess_row, guess_col = random.choice(range(10)), random.choice(range(10))
-            print("got a guess", flush=True)
+            print("got a guess")
 
             if (guess_row + guess_col) % smallestShipSize != 0:
-                print("if was true", flush=True)
+                print("if was true")
                 continue
-            print("if was false", flush=True)
+            print("if was false")
             if isValidAttack(self.attackBoard, guess_row, guess_col):
-                print("attack was valid so break", flush=True)
+                print("attack was valid so break")
 
                 break
-            print("attack was not valid so loop", flush=True)
+            print("attack was not valid so loop")
 
-        print("got better guess", flush=True)
+        print("got better guess")
 
         return guess_row, guess_col
 
@@ -174,23 +175,23 @@ class BattleShipAI:
     # when an attack is a hit, add squares around it (top, below, left, right) to targetStack
     # structure from: https://towardsdatascience.com/coding-an-intelligent-battleship-agent-bf0064a4b319
     def targetedAttack(self):
-        print("entered targeted attack function", flush=True)
+        print("entered targeted attack function")
         
         # if previous shot was a hit and sunk the ship
         if self.previousShotHit == 1 and self.previousShotSunk == 1:
-            print("prev shot hit and sunk", flush=True)
+            print("prev shot hit and sunk")
             # clear stack
             while (self.highPriorityStack != []):
                 self.highPriorityStack.pop()
         
         # if prev shot hit but did not sink ship
         elif self.previousShotHit == 1 and self.previousShotSunk == 0:
-            print("prev shot hit but no sunk", flush=True)
+            print("prev shot hit but no sunk")
             possibleTargets = self.getSurroundingLocations(self.previousShotRow, self.previousShotCol)
-            print("retrieved targets", flush=True)
+            print("retrieved targets")
 
             for row, col in possibleTargets:
-                print("checking targets", flush=True)
+                print("checking targets")
 
                 if isValidAttack(self.attackBoard, row, col): # there has been no previous shot there
                     self.highPriorityStack.append((row, col))
@@ -198,10 +199,10 @@ class BattleShipAI:
         
         # if length of target stack is 0, do randomAttack
         if len(self.highPriorityStack) == 0:
-            print("attempt a random attack", flush=True)
+            print("attempt a random attack")
             attackRow, attackCol = self.randomAttack()
         else:
-            print("attempt a targeted attack", flush=True)
+            print("attempt a targeted attack")
             attackRow, attackCol = self.highPriorityStack.pop()
         
         
@@ -210,16 +211,16 @@ class BattleShipAI:
     # betterAI clears the stack when a shot has been hit, keeps attacking in a line when multiple 
     # shots have hit in a row, and uses more efficient surveying shots instead of random 
     def betterTargetedAttack(self):
-        print("entered better targeted attack func", flush=True)
+        print("entered better targeted attack func")
         # if the previous shot hit but did not sink a ship
         if self.previousShotHit == 1 and self.previousShotSunk == 0:
-            print("entered first if", flush=True)
+            print("entered first if")
             ### if there is a hit above or below previoushit's location
             aboveRow = self.previousShotRow - 1
             belowRow = self.previousShotRow + 1
             addedTargets = False
             if wasAttacked(self.attackBoard, aboveRow, self.previousShotCol, self.boardSize) or wasAttacked(self.attackBoard, belowRow, self.previousShotCol, self.boardSize):
-                print("passed first if: a hit above or below", flush=True)
+                print("passed first if: a hit above or below")
 
                 # add above those hits in a line to the higher prio stack
                 # keep shifting up until find a "O" or "-"
@@ -227,7 +228,7 @@ class BattleShipAI:
                     while charAt(self.attackBoard, aboveRow, self.previousShotCol) == "X":
                         aboveRow -= 1
                         if self.outOfBounds(aboveRow):
-                            print("was out of bounds", flush=True)
+                            print("was out of bounds")
                             break
                 # # if there has been no attack at this index
                     if not self.outOfBounds(aboveRow) and charAt(self.attackBoard, aboveRow, self.previousShotCol) != "O":
@@ -239,7 +240,7 @@ class BattleShipAI:
                     while charAt(self.attackBoard, belowRow, self.previousShotCol) == "X":
                         belowRow += 1
                         if self.outOfBounds(belowRow):
-                            print("was out of bounds", flush=True)
+                            print("was out of bounds")
                             break
                 # # if there has been no attack at this index
                     if not self.outOfBounds(belowRow) and charAt(self.attackBoard, belowRow, self.previousShotCol) != "O":
@@ -259,36 +260,36 @@ class BattleShipAI:
             leftCol = self.previousShotCol - 1
             rightCol = self.previousShotCol + 1
             if wasAttacked(self.attackBoard, self.previousShotRow, leftCol, self.boardSize) or wasAttacked(self.attackBoard, self.previousShotRow, rightCol, self.boardSize):
-                print("passed second if, hit to left or right", flush=True)
+                print("passed second if, hit to left or right")
 
                 # add left to high prio stack
                 # keep shifting to the left until find a "O" or "-"
                 if not self.outOfBounds(leftCol):
                     while charAt(self.attackBoard, self.previousShotRow, leftCol) == "X":
-                        print("shifting left", flush=True)
+                        print("shifting left")
                         leftCol -= 1
                         if self.outOfBounds(leftCol):
-                            print("was out of bounds", flush=True)
+                            print("was out of bounds")
                             break
                 # # if there has been no attack at this index
                     if not self.outOfBounds(leftCol) and charAt(self.attackBoard, self.previousShotRow, leftCol) != "O":
-                        print("adding", self.previousShotRow, leftCol, flush=True)
+                        print("adding", self.previousShotRow, leftCol,  )
                         self.highPriorityStack.append((self.previousShotRow, leftCol))
 
 
                 # add right to higher prio stack
                 # keep shifting to the right until find a "O" or "-"
                 if not self.outOfBounds(rightCol):
-                    print("right col is not out of bounds", rightCol, flush=True)
+                    print("right col is not out of bounds", rightCol )
                     while charAt(self.attackBoard, self.previousShotRow, rightCol) == "X":
-                        print("shifting right", flush=True)
+                        print("shifting right")
                         rightCol += 1
                         if self.outOfBounds(rightCol):
-                            print("was out of bounds", flush=True)
+                            print("was out of bounds")
                             break
                 # # tif here has been no attack at this index
                     if not self.outOfBounds(rightCol) and charAt(self.attackBoard, self.previousShotRow, rightCol) != "O":
-                        print("adding", self.previousShotRow, rightCol, flush=True)
+                        print("adding", self.previousShotRow, rightCol)
                         self.highPriorityStack.append((self.previousShotRow, rightCol))
 
                 # add above to lower prio
@@ -298,24 +299,24 @@ class BattleShipAI:
                 # add below to lower prio stack
                 if isValidAttack(self.attackBoard, self.previousShotRow + 1, self.previousShotCol):
                     self.lowPriorityStack.append((self.previousShotRow + 1, self.previousShotCol))
-                print("added targets", flush=True)
+                print("added targets")
                 addedTargets = True
             
             # if there was no hit above/below/left/right
             if addedTargets == False:
                 print("there was no hit above/below/left/right of the previous hit")
                 possibleTargets = self.getSurroundingLocations(self.previousShotRow, self.previousShotCol)
-                print("retrieved targets", flush=True)
+                print("retrieved targets")
 
                 for row, col in possibleTargets:
-                    print("checking targets", flush=True)
+                    print("checking targets")
                     if isValidAttack(self.attackBoard, row, col): # there has been no previous shot there
                         self.lowPriorityStack.append((row, col))
      
     
         # if the previous hit and sunk a ship
         elif self.previousShotHit == 1 and self.previousShotSunk == 1:
-            print("entered elif", flush=True)
+            print("entered elif")
             # clear BOTH stacks
             while (self.highPriorityStack != []):
                 self.highPriorityStack.pop()
@@ -336,22 +337,22 @@ class BattleShipAI:
                         if isValidAttack(self.attackBoard, row, col): # there has been no previous shot there
                             self.lowPriorityStack.append((row, col))
 
-        print("trying to pop a shot off", flush=True)
+        print("trying to pop a shot off")
         ## if there are high priority targets, shoot from them
         if len(self.highPriorityStack) != 0:
-            print("getting a high prio", flush=True)
+            print("getting a high prio")
 
             attackRow, attackCol = self.highPriorityStack.pop()
         ## if there are low priority targets, shoot from them
         elif len(self.lowPriorityStack) != 0:
-            print("getting a low prio", flush=True)
+            print("getting a low prio")
 
             attackRow, attackCol = self.lowPriorityStack.pop()
         ## else shoot with better random attack
         else:
-            print("getting a better random", flush=True)
+            print("getting a better random")
             attackRow, attackCol = self.betterRandomAttack()
-        print("going to return attack row and col", attackRow, attackCol, flush=True)
+        print("going to return attack row and col", attackRow, attackCol)
         return attackRow, attackCol
         
 
@@ -359,7 +360,7 @@ class BattleShipAI:
         if self.type == "inOrder":
             return self.inOrderAI()
         elif self.type == "random":
-            print("trying to get random attack", flush=True)
+            print("trying to get random attack")
             return self.randomAttack()
         elif self.type == "targeted":
             return self.targetedAttack()

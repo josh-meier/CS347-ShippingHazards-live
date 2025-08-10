@@ -136,3 +136,9 @@ dmypy.json
 config.py
 migrations/
 node_modules
+
+# ssh key
+.ssh/
+
+# env
+.env
