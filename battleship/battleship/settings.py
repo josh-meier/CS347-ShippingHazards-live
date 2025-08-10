@@ -30,6 +30,16 @@ USE_X_FORWARDED_HOST = True
 ALLOWED_HOSTS = ['web-go884448oss8s8w8soskwkcw', 'localhost', 'redis-go884448oss8s8w8soskwkcw', 'shippinghazards.com','167.88.44.174','*']
 
 
+# Allow CSRF from our frontends (local dev and production)
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost',
+    'http://localhost:3000',
+    'http://127.0.0.1',
+    'http://167.88.44.174',
+    'https://shippinghazards.com',
+]
+
+
 # Application definition
 
 INSTALLED_APPS = [

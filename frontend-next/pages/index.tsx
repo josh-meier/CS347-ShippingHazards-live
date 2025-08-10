@@ -51,7 +51,7 @@ function LoginFields() {
         } else {
             try {
                 // First, get the CSRF token
-                await fetch('/accounts/csrf/');
+                await fetch('/accounts/csrf/', { credentials: 'include' });
                 const csrfToken = getCookie('csrftoken');
 
                 // Then, make the login request
@@ -61,6 +61,7 @@ function LoginFields() {
                         'Content-Type': 'application/json',
                         'X-CSRFToken': csrfToken || '',
                     },
+                    credentials: 'include',
                     body: JSON.stringify({ username, password }),
                 });
 
@@ -76,7 +77,7 @@ function LoginFields() {
 
     const guestLogin = async () => {
         try {
-            await fetch('/accounts/csrf/');
+            await fetch('/accounts/csrf/', { credentials: 'include' });
             const csrfToken = getCookie('csrftoken');
             const resp = await fetch('/accounts/guest_login/', {
                 method: 'POST',
@@ -84,6 +85,7 @@ function LoginFields() {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': csrfToken || '',
                 },
+                credentials: 'include',
                 body: JSON.stringify({}),
             });
             const json = await resp.json();

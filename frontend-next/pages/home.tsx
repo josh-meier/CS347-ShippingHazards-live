@@ -90,6 +90,8 @@ function NewGameButton({ text, isAI, opponentID }: any) {
 
             const newGameResponse = await fetch(`/play/new-game/${playerID}/${opponentID}/${numShips}/${boardSize}/${isAI}`);
             const newGameJson = await newGameResponse.json();
+            // If multiplayer, show a prompt with an invite link after redirect
+            // Next page (`/game`) will also render an invite banner using the gameID
             redirectBrowser(newGameJson, playerID, color);
         } catch (error) {
             console.error("Error:", error)

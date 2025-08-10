@@ -1,5 +1,13 @@
 from django.urls import path
-from .views import get_user_info, react_login, react_signup, react_change_password, get_csrf_token, react_logout
+from .views import (
+    get_user_info,
+    react_login,
+    react_signup,
+    react_change_password,
+    get_csrf_token,
+    react_logout,
+    guest_login,
+)
 
 urlpatterns = [
     path("login/", react_login, name="react_login"),
@@ -8,4 +16,5 @@ urlpatterns = [
     path("logout/", react_logout, name="react_logout"),
     path("csrf/", get_csrf_token, name="csrf"),
     path("get_user_info/", get_user_info, name="get_user_info"),
+    path("guest_login/", guest_login, name="guest_login"),
 ]
