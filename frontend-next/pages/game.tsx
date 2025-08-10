@@ -567,7 +567,7 @@ export default function GamePlay() {
             <HeaderAndNav username={null} />
             {/* Invite banner under nav for multiplayer games */}
             {!isAIGame && (
-                <div style={{ position: 'sticky', top: 0, zIndex: 900, display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: '.25em' }}>
+                <div style={{ position: 'relative', top: 0, zIndex: 900, display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: '.25em' }}>
                     <div className="invite-banner" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'nowrap', justifyContent: 'center', padding: '4px 8px' }}>
                         <span style={{ fontWeight: 600 }}>Invite link:</span>
                         <span className="invite-link" style={{ userSelect: 'all', whiteSpace: 'nowrap' }}>{`${typeof window !== 'undefined' ? window.location.origin : ''}/invite/${gameID}?boardSize=${boardSize}`}</span>

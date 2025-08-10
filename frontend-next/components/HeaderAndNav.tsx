@@ -18,7 +18,7 @@ function Header({ screenName }: HeaderProps) {
 
     return (
         <header>
-            <Image src={logo} alt="Logo" id="logo" style={{ cursor: 'pointer' }} onClick={() => router.push(`/home`)} />
+            <Image src={logo} alt="Logo" id="logo" priority style={{ cursor: 'pointer' }} onClick={() => router.push(`/home`)} />
             <div id="header-text-container">
                 <div id="header-text">SHIPPING HAZARDS</div>
                 <div id="header-subtitle">A Battleship Game by Pink Puffy Rhinos</div>
@@ -55,7 +55,9 @@ function NavigationBar() {
 }
 
 export default function HeaderAndNav({ username }: { username: any}) {
-    const [screenName, setScreenName] = useState(username);
+    const [screenName, setScreenName] = useState<string>(username ?? (typeof window !== 'undefined'
+        ? sessionStorage.getItem('screenName') || 'Loading…'
+        : 'Loading…'));
     const router = useRouter();
 
      useEffect(() => {
@@ -66,10 +68,13 @@ export default function HeaderAndNav({ username }: { username: any}) {
         // This useEffect hook will run once when the component mounts
         async function fetchScreenName() {
             try {
-                const response = await fetch('/accounts/get_user_info/');
+                const response = await fetch('/accounts/get_user_info/', { credentials: 'include' });
                 if (response.ok) {
                     const data = await response.json();
                     setScreenName(data.screen_name);
+                    if (typeof window !== 'undefined') {
+                        sessionStorage.setItem('screenName', data.screen_name);
+                    }
                 } else {
                     // Handle cases where the user is not logged in or session expired
                     // Redirect to login page
@@ -84,13 +89,9 @@ export default function HeaderAndNav({ username }: { username: any}) {
         fetchScreenName();
     }, [router.query.dev]);
 
-    if (!screenName) {
-        return null;
-    }
-
     return (
         <div style={{ width: '100%' }}>
-            <Header screenName={screenName as string} />
+            <Header screenName={screenName} />
             <NavigationBar />
         </div>
     );
