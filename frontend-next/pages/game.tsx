@@ -399,6 +399,12 @@ export default function GamePlay() {
     const [isAIGame, setIsAIGame] = useState<boolean>(false);
     const [muted, setMuted] = useState(true);
     const [copied, setCopied] = useState(false);
+    const [qrOpen, setQrOpen] = useState(false);
+
+    const inviteUrl = useMemo(() => {
+        if (typeof window === 'undefined' || !gameID) return '';
+        return `${window.location.origin}/invite/${gameID}?boardSize=${boardSize}`;
+    }, [gameID]);
 
     const [hitPopup1Visible, setHitPopup1Visible] = useState(false);
     const [hitPopup2Visible, setHitPopup2Visible] = useState(false);
@@ -568,23 +574,45 @@ export default function GamePlay() {
             {/* Invite banner under nav for multiplayer games */}
             {!isAIGame && (
                 <div style={{ position: 'relative', top: 0, zIndex: 900, display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: '.25em' }}>
-                    <div className="invite-banner" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'nowrap', justifyContent: 'center', padding: '4px 8px' }}>
+                    <div className="invite-banner" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', justifyContent: 'center', padding: '4px 8px' }}>
                         <span style={{ fontWeight: 600 }}>Invite link:</span>
-                        <span className="invite-link" style={{ userSelect: 'all', whiteSpace: 'nowrap' }}>{`${typeof window !== 'undefined' ? window.location.origin : ''}/invite/${gameID}?boardSize=${boardSize}`}</span>
+                        <span className="invite-link" style={{ userSelect: 'all', whiteSpace: 'nowrap' }}>{inviteUrl}</span>
                         <button
                             className="copy-button inputButton"
                             style={{ lineHeight: '1.6', fontSize: '0.9rem', padding: '0.2em 0.6em', width: 'auto', margin: 0 }}
                             onClick={() => {
                                 if (typeof window === 'undefined') return;
-                                navigator.clipboard.writeText(`${window.location.origin}/invite/${gameID}?boardSize=${boardSize}`);
+                                navigator.clipboard.writeText(inviteUrl);
                                 setCopied(true);
                                 setTimeout(() => setCopied(false), 2000);
                             }}
                         >{copied ? 'Copied!' : 'Copy'}</button>
+                        <button
+                            className="qr-button inputButton"
+                            style={{ lineHeight: '1.6', fontSize: '0.9rem', padding: '0.2em 0.6em', width: 'auto', margin: 0 }}
+                            onClick={() => setQrOpen(true)}
+                        >QR Code</button>
                     </div>
                     <RoomIDText status={status} gameID={gameID} playerNum={playerNum} />
                     <div style={{ alignSelf: 'flex-end', padding: '0 .75em' }}>
                         <MuteButton muted={muted} setMuted={setMuted} />
+                    </div>
+                </div>
+            )}
+            {qrOpen && (
+                <div className="modal-overlay" onClick={() => setQrOpen(false)}>
+                    <div className="modal" onClick={(e) => e.stopPropagation()}>
+                        <button
+                            className="inputButton modal-close"
+                            onClick={() => setQrOpen(false)}
+                            aria-label="Close"
+                        >×</button>
+                        <div style={{ fontSize: '0.95rem', marginBottom: '8px', textAlign: 'center' }}>Scan to join game</div>
+                        <img
+                            src={`https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(inviteUrl)}`}
+                            alt="QR code to join game"
+                            style={{ display: 'block', width: '240px', height: '240px' }}
+                        />
                     </div>
                 </div>
             )}
