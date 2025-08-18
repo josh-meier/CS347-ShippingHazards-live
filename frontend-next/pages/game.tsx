@@ -372,8 +372,10 @@ function BoardsAndTitles({ status, setStatus, popups1, popups2, gameID, playerID
 
 function RoomIDText({ status, gameID, playerNum }: { status: string, gameID: string, playerNum: number }) {
     if (playerNum !== 1) return null;
-    const text = status === "setup" ? `Tell your friend to join with this ID -> Room ID: ${gameID}` : `Room ID: ${gameID}`;
-    return <div id="gameIDText">{text}</div>;
+    // const text = status === "setup" ? `Tell your friend to join with this ID -> Room ID: ${gameID}` : `Room ID: ${gameID}`;
+    const text = `Tell your friend to join with this ID -> Room ID: ${gameID}`;
+    
+    return (status === "setup" ? <div id="gameIDText">{text}</div> : null);
 }
 
 function MuteButton({ muted, setMuted }: { muted: boolean, setMuted: (muted: boolean) => void }) {
